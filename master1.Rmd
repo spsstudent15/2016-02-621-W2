@@ -13,7 +13,7 @@ Upon following the instructions below, use your created R functions and the othe
 
 # Step 1
 
-1. Download the classification output data set (attached in Blackboard to the assignment).
+Download the classification output data set (attached in Blackboard to the assignment).
 
 ```{r step1writeup}
 
@@ -27,7 +27,7 @@ Upon following the instructions below, use your created R functions and the othe
 
 # Step 2
 
-2. The data set has three key columns we will use:
+The data set has three key columns we will use:
 ??? class: the actual class for the observation
 ??? scored.class: the predicted class for the observation (based on a threshold of 0.5)
 ??? scored.probability: the predicted probability of success for the observation
@@ -46,7 +46,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 3
 
-3. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the accuracy of the predictions.
+Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the accuracy of the predictions.
 
 
 ```{r step3writeup}
@@ -60,7 +60,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 4
 
-4. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the classification error rate of the predictions. Verify that you get an accuracy and an error rate that sums to one.
+Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the classification error rate of the predictions. Verify that you get an accuracy and an error rate that sums to one.
 
 
 
@@ -77,7 +77,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 # Step 5
 
 
-5. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions.
+Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the precision of the predictions.
 
 
 ```{r step5writeup}
@@ -94,7 +94,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 # Step 6
 
 
-6. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall.
+Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the sensitivity of the predictions. Sensitivity is also known as recall.
 
 
 
@@ -111,7 +111,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 7
 
-7. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions.
+Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the specificity of the predictions.
 
 
 
@@ -129,7 +129,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 8
 
-8. Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions.
+Write a function that takes the data set as a dataframe, with actual and predicted classifications identified, and returns the F1 score of the predictions.
 
 
 ```{r step8writeup}
@@ -145,7 +145,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 9
 
-9. Before we move on, let's consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1.
+Before we move on, let's consider a question that was asked: What are the bounds on the F1 score? Show that the F1 score will always be between 0 and 1.
 
 
 ```{r step9writeup}
@@ -159,7 +159,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 10
 
-10. Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.
+Write a function that generates an ROC curve from a data set with a true classification column (class in our example) and a probability column (scored.probability in our example). Your function should return a list that includes the plot of the ROC curve and a vector that contains the calculated area under the curve (AUC). Note that I recommend using a sequence of thresholds ranging from 0 to 1 at 0.01 intervals.
 
 
 
@@ -175,7 +175,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 11
 
-11. Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.
+Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.
 
 
 ```{r step11writeup}
@@ -190,7 +190,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 # Step 12
 
 
-12. Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?
+Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity, and specificity. Apply the functions to the data set. How do the results compare with your own functions?
 
 ```{r step12writeup}
 
@@ -204,7 +204,7 @@ Use the table() function to get the raw confusion matrix for this scored dataset
 
 # Step 13
 
-13. Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?
+Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?
 
 ```{r step13writeup}
 
