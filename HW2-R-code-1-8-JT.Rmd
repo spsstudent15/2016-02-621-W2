@@ -7,6 +7,7 @@ output: html_document
 
 ```{r}
 library(knitr)
+library(caret)
 
 ```
 
@@ -192,3 +193,41 @@ Now test F1.score
 ```{r}
 F1.Score(actual, predicted)
 ```
+
+
+11.Use your created R functions and the provided classification output data set to produce all of the classification metrics discussed above.
+
+```{r}
+accuracy(hw2$class, hw2$scored.class)
+classif.err.rate(hw2$class, hw2$scored.class)
+precision(hw2$class, hw2$scored.class)
+sensitivity(hw2$class, hw2$scored.class)
+specificity(hw2$class, hw2$scored.class)
+F1.Score(hw2$class, hw2$scored.class)
+
+
+```
+
+|   Metric                  |  Value
+|---------------------------|---------
+| Accuracy                  |  0.8066
+| Classification Error Rate |  0.1934 
+| Precision                 |  0.8438
+| Sensitivity               |  0.4737
+| Specificity               |  0.9597
+| F1 Score                  |  0.6067
+
+
+12.  investigate the caret package.  In particular, consider the functions confusionMatrix, sensitivity and specificity.  Apply the functions to the data set.  How do the results compare with your own functions?
+```{r}
+confusionMatrix(hw2$scored.class, hw2$class)
+```
+
+Compare our model to what caret produces:
+
+| Approach       |  Sensitivity|  Specificity |  Accuracy  
+|----------------|-------------|--------------|------------
+| Our Functions  |    0.4737   |   0.9597     |   0.8066    
+| caret package  |    0.9597   |   0.4737     |   0.8066   
+
+Notice in this case the sensitivity and specificity are switched.  That is because we defined the TP as predicted = 1 and actual = 1 while the caret package defined it as predicted class = 0 and actual = 0.
