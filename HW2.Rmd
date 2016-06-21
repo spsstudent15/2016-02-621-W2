@@ -8,7 +8,8 @@ output: html_document
 ```{r}
 library(knitr)
 library(caret)
-
+library(e1071)
+library(pROC)
 ```
 
 1. Download the classification output data set (attached in Blackboard to the assignment).
@@ -218,7 +219,7 @@ F1.Score(hw2$class, hw2$scored.class)
 | F1 Score                  |  0.6067
 
 
-12.  investigate the caret package.  In particular, consider the functions confusionMatrix, sensitivity and specificity.  Apply the functions to the data set.  How do the results compare with your own functions?
+12.  Investigate the caret package.  In particular, consider the functions confusionMatrix, sensitivity and specificity.  Apply the functions to the data set.  How do the results compare with your own functions?
 ```{r}
 confusionMatrix(hw2$scored.class, hw2$class)
 ```
@@ -231,3 +232,5 @@ Compare our model to what caret produces:
 | caret package  |    0.9597   |   0.4737     |   0.8066   
 
 Notice in this case the sensitivity and specificity are switched.  That is because we defined the TP as predicted = 1 and actual = 1 while the caret package defined it as predicted class = 0 and actual = 0.
+
+13.  Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?

@@ -129,6 +129,16 @@ library(caret)</code></pre>
 <pre><code>## Loading required package: lattice</code></pre>
 <pre><code>## Loading required package: ggplot2</code></pre>
 <pre><code>## Warning: package 'ggplot2' was built under R version 3.2.5</code></pre>
+<pre class="r"><code>library(e1071)</code></pre>
+<pre><code>## Warning: package 'e1071' was built under R version 3.2.5</code></pre>
+<pre class="r"><code>library(pROC)</code></pre>
+<pre><code>## Warning: package 'pROC' was built under R version 3.2.5</code></pre>
+<pre><code>## Type 'citation(&quot;pROC&quot;)' for a citation.</code></pre>
+<pre><code>## 
+## Attaching package: 'pROC'</code></pre>
+<pre><code>## The following objects are masked from 'package:stats':
+## 
+##     cov, smooth, var</code></pre>
 <ol style="list-style-type: decimal">
 <li>Download the classification output data set (attached in Blackboard to the assignment).</li>
 </ol>
@@ -345,7 +355,7 @@ tmp</code></pre>
 </tbody>
 </table>
 <ol start="12" style="list-style-type: decimal">
-<li>investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity and specificity. Apply the functions to the data set. How do the results compare with your own functions?</li>
+<li>Investigate the caret package. In particular, consider the functions confusionMatrix, sensitivity and specificity. Apply the functions to the data set. How do the results compare with your own functions?</li>
 </ol>
 <pre class="r"><code>confusionMatrix(hw2$scored.class, hw2$class)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
@@ -400,6 +410,9 @@ tmp</code></pre>
 </tbody>
 </table>
 <p>Notice in this case the sensitivity and specificity are switched. That is because we defined the TP as predicted = 1 and actual = 1 while the caret package defined it as predicted class = 0 and actual = 0.</p>
+<ol start="13" style="list-style-type: decimal">
+<li>Investigate the pROC package. Use it to generate an ROC curve for the data set. How do the results compare with your own functions?</li>
+</ol>
 </div>
 
 
