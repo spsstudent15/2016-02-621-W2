@@ -251,7 +251,7 @@ Therefore $0 < F1 < 1$ are the bounds of the F1 score range.
 
 The function to plot ROC and calculate AUC is defined below. 
 
-Please note that the AUC calculation we use is implemented via an approximation algorithm based on a Riemann sum, where for each Y-value the corresponding X distance used to define the base of the rectangle is calculated as the difference between the current and previous $(1 - Specificity) values.
+Please note that the AUC calculation we use is implemented via an approximation algorithm based on a Riemann sum, where for each Y-value the corresponding X distance used to define the base of the rectangle is calculated as the difference between the current and previous $(1 - Specificity)$ values.
 
 ```{r}
 rocplot <- function(hw2.d){
