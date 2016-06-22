@@ -57,7 +57,6 @@ We can verify this is the case by converting the contingency table to a datafram
 | True Negatives  (TN) |  119   | False Postives (FP) |   5    |
 | False Negatives (FN) |   30   | True Positives (TP) |  27    |
 
-Furthermore, it is important to note here that R's __table()__ function is treating zeroes as __*negative*__ outcomes while 1's are treated as __*positive*__ outcomes. This fact will become relevant when we compare the output of the functions we build here against the output of R's __caret__ package.
 
 ```{r}
 # display an interpretable version of the matrix
@@ -65,6 +64,7 @@ tmp <- data.frame(table(actual, predicted))
 tmp
 ```
 
+Furthermore, it is important to note here that R's __table()__ function is treating zeroes as __*negative*__ outcomes while 1's are treated as __*positive*__ outcomes. This fact will become relevant when we compare the output of the functions we build here against the output of R's __caret__ package.
 
 # ------------------------------------------------------
  
