@@ -1,15 +1,9 @@
 ---
 title: 'Data 621 Homework Assignment # 2'
 author: ' Group 2 - James Topor, Jeff Nieman, Scott Karr, Armenoush Aslanian-Persico'
-date: "June 18, 2016"
+date: "June 23, 2016"
 output: pdf_document
 ---
-
-```{r, eval=TRUE, message=FALSE, warning=FALSE}
-library(knitr)
-library(caret)
-library(pROC)
-```
 
 __--------------------------------------------------------------------------------------------------------------------------__
 
@@ -17,7 +11,12 @@ __------------------------------------------------------------------------------
 
 __*Download the classification output data set (attached in Blackboard to the assignment).*__
 
-```{r}
+
+```{r, eval=TRUE, message=FALSE, warning=FALSE}
+library(knitr)
+library(caret)
+library(pROC)
+
 hw2 <- read.csv("https://raw.githubusercontent.com/jtopor/CUNY-MSDA-621/master/HW-2/classification-output-data.csv", stringsAsFactors = FALSE)  
 ```
 
