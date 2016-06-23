@@ -435,7 +435,7 @@ __*Investigate the pROC package.  Use  it  to  generate  an  ROC  curve  for  th
 
 R's pROC package provides tools for visualizing, smoothing and comparing Receiver Operating Characteristic (ROC) curves.  Within the package are specific function for calculating full and partial areas under the ROC curve and a method for comparing curves, the "roc.test" function.  Confidence intervals can also be computed using the "ci" functions.
 
-The key function provided by the pROC package is __roc()__, which builds an ROC "list" object containing two vectors (response, predictor) and can be plotted or tested against other ROC curves using the roc.test function. Finally, the __auc()__ function is used to calculate the area under the ROC curve using a trapezoidal algorithm.
+The key function provided by the pROC package is __roc()__, which builds an ROC "list" object containing two vectors (response, predictor) that can be plotted or tested against other ROC curves using the __roc.test()__ function. Finally, the __auc()__ function is used to calculate the area under the ROC curve using a trapezoidal algorithm.
 
 To mimic the behavior of the __rocplot()__ function we constructed for __Question #10__, we've wrapped a function around calls to the pROC package's __roc()__ and __auc()__ functions:
 
