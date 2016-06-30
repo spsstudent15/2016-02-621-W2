@@ -1,0 +1,1214 @@
+---
+title: "Data 621 Homework 3: Code Appendix"
+author: "Jeff Nieman, Scott Karr, James Topor, Armenoush Aslanian-Persico"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    code_folding: show
+    theme: spacelab
+---
+
+
+# Data Exploration
+
+####Data Summary 
+
+```{r, fig.width = 9, fig.height = 7, include = FALSE}
+url <- "https://raw.githubusercontent.com/jtopor/CUNY-MSDA-621/master/HW-3/crime-training-data.csv"
+hw3 <- read.csv(url, stringsAsFactors = FALSE)  
+
+attach(hw3)
+```
+
+GLMs can be thought of as a two-stage modeling approach that first models the response variable using a probability distribution, such as the Binomial distribution. Second, the parameters of the distribution are modelled using a collection of predictors and a Logit form of multiple regression.  This exercise builds an appropriate model that classifies crime in Boston as above or below the median crime rate using an initial set of 13 attributes coded as predictor variables and one target response variable listed in `Table 1` using a Logit model for multiple linear regression.  
+
+--------------
+Data Dictionary 
+--------------
+
+| vars    |   description																	                            |  variable type		
+| ------- | --------------------------------------------------------------------------| ---------------
+| zn      |  `proportion of residential land zoned for large lots (> 25000 sq. ft.)`  | `bi-predictor`
+| indus   |  `proportion of non-retail business acres per suburb`       	            | `predictor`
+| chas    |  `a dummy var. for whether the suburb borders the Charles River 1 or 0`   | `bi-predictor`
+| nox     |  `nitrogen oxides concentration (parts per 10 million)`           				| `predictor`
+| rm      |  `average number of rooms per dwelling`					                          | `predictor`
+| age     |  `proportion of owner-occupied units built prior to 1940 `						    | `predictor`
+| dis     |  `weighted mean of distances to five Boston employment centers`					  | `predictor`
+| rad     |  `index of accessibility to radial highways`									            | `cat-predictor`
+| tax     |  `full-value property-tax rate per $10,000`									              | `predictor`
+| ptratio |  `pupil-teacher ratio by town`													                  | `predictor`
+| black   |  `1000(Bk - 0.63)2 where Bk is the proportion of blacks by town`				  | `predictor`
+| lstat   |  `lower status of the population (percent)`										            | `predictor`
+| medv    |  `median value of owner-occupied homes in $1000s`								          | `predictor`
+| target  |  `whether the crime rate is above the median crime rate 1 or 0`	          | `bi-response`   
+
+Table 1:  Desciption of each Predictor Variable by type
+
+####Model Assumptions
+The models developed in section 3 are based upon assumptions made for a logistic regression model.  As such, they inform what data
+analysis is to be undertaken in order to build a valid model.
+
+The assumptions required for statistical tests in logistic regression are far less restrictive than those for Ordinary Least Squares regression. There are no formal requirement for   
+
+  * `multivariate normality`
+  * `homoscedasticity`
+  * `linearity of the independent variables within each category of the dependent variable`
+  
+However, logistical regression models should have little or no multicollinearity and deviation--the corrolary to $R^2$ for logistical regression--should be checked for significant leverage points.
+
+Table 2 lists the basic descriptive statistics of our data set.  A few things stand-out in this table, in particular there is no missing data, the range of data for 10 of the variables have a range of less than 50 meaning there exists clustering of repeated values within most of the variable distirbutions.  This is explainable in 3 of the binary varibles, `zn`, `indus` and `target`.  For `nox` this because concentrations 
+of nitrous oxide are expressed as a decimal percentage between zero and one.  For the remaining 6 variables, this clustering indicates a 
+degree of catagorical behavior that they all exhibit. [!ref1](http://www.statisticssolutions.com/assumptions-of-logistic-regression/)
+[!ref2](http://www.sagepub.com/upm-data/5081_Spicer_Chapter_5.pdf, page 13) (Fox pg xx per Jeff.)
+
+----------------------
+Descriptive Statistics  
+----------------------
+
+|    vars |   n	  | mean |   sd	 | median | min |  max |  range | skew | kurtosis | se
+|---------|-------|-----:|------:|-------:|----:|-----:|-------:|-----:|---------:|-----: 
+| zn      |  466  |   12 |   23  |      0 |   0 |  100 |    100 |    2 |     3.81 | 1.08
+| indus   |  466  |   11 |    7  |     10 |   0 |   28 |     28 |    0 |    -1.24 | 0.32
+| chas    |  466  |    0 |    0  |      0 |   0 |    1 |      1 |    3 |     9.15 | 0.01
+| nox     |  466  |    1 |    0  |      1 |   0 |    1 |      0 |    1 |    -0.04 | 0.01
+| rm      |  466  |    6 |    1  |      6 |   4 |    9 |      5 |    0 |     1.54 | 0.03
+| age     |  466  |   68 |   28  |     77 |   3 |  100 |     97 |   -1 |    -1.01 | 1.31
+| dis     |  466  |    4 |    2  |      3 |   1 |   12 |     11 |    1 |     0.47 | 0.10
+| rad     |  466  |   10 |    9  |      5 |   1 |   24 |     23 |    1 |    -0.86 | 0.40
+| tax     |  466  |  410 |  168  |    335 | 187 |  711 |    524 |    1 |    -1.15 | 7.78
+| ptratio |  466  |   18 |    2  |     19 |  13 |   22 |      9 |   -1 |    -0.40 | 0.10
+| black   |  466  |  357 |   91  |    391 |   0 |  397 |    397 |   -3 |     7.34 | 4.23
+| lstat   |  466  |   13 |    7  |     11 |   2 |   38 |     36 |    1 |     0.50 | 0.33
+| medv    |  466  |   23 |    9  |     21 |   5 |   50 |     45 |    1 |     1.37 | 0.43
+| target  |  466  |    0 |    1  |      0 |   0 |    1 |      1 |    0 |    -2.00 | 0.02
+
+Table 2:  Survey of Key Statistical Measures
+
+####Variable Clustering & Anomolies
+The 13 variables are used to predict crime outcomes in this exercise and can reasonably be classified into two meta-catagories; those that 
+are indicative of geographic proximity to various neighborhood types in and around the city of Boston and those that are indicative of the 
+economic stratafication of those same neighborhoods.  Collinearity can can be both calculated and surmised from these variable interactions 
+and removed, thus improving the model.  Two geographic predictors, `rad` and `chas` are both catagorical variables are proxies for types of Boston neighborhoods and can be used to demonstrate significant variablity in the economic stature by neighborhood.  This is important because 
+a valid model for crime will measure both neighborhood and economic factors without redundancy.
+
+Several other variables when aggregated by count show a distinctive clustering effect with high counts for particular observations.
+Notably, four predictor variables in the data set share unusually large clustering of 25% of their data on a single value within their distributions.  These variables are indus, rad, tax and ptratio each which have 121 rows in common that exhibit concentrations on a single 
+value and contribute to significant skew in their distributions.  Of these, the 121 rows for indus, tax and ptratio concentrate on the 
+high side of their respective distributions.  For ptratio, there still remain 14 occurances of 21.2 after the removal of the 121 rows. 
+Two other predictor variables, `age` and `black` indicate similar "clustering" of data on single values although their concentration is independent of the other predictors.
+
+This clustering effect is illustrated in the Grouped Variables `Tables 3a & 3b` listed below.  They show each variable grouped by
+count descending and shows the top 5 most frequent values of each variable.
+
+\newpage
+
+-------------------
+Clustering By Group 
+-------------------
+
+|indx | zn |   n | indus |  n   | chas |  n  | 	nox  | n  |   rm  | n |  age  | n  |   dis  | n | rad |  n  
+|-----|:---|-----|-------|-----:|:----:|----:|:-----:|:--:|:-----:|:-:|------:|---:|:------:|:-:|----:|----:                 
+|  1  | 0  | 339 | 18.10 |  121 |    0 | 433 | 0.538 | 20 | 5.713 | 3 | 100.0 | 42 | 3.4952 | 4 |  24 | 121  
+|  2  | 1  | 127 | 19.58 |   28 |    1 |  33 | 0.437 | 17 | 6.127 | 3 |  95.4 |  4 | 5.2873 | 4 |   5 | 109  
+|  3  | -  |   - |  8.14 |   19 |    - |	 - | 0.713 | 16 | 6.167 | 3 |  96.0 |  4 | 5.4007 | 4 |   4 | 103  
+|  4  | -  |   - |	6.20 |   16 |    - |	 - | 0.871 | 16 | 6.229 | 3 |  97.9 |  4 | 5.7209 | 4 |   3 |  36  
+|  5  | -  |   - | 21.89 |   14 |    - |	 - | 0.489 | 14 | 6.405 | 3 |  98.2 |  4 | 6.8147 | 4 |   6 |  25    
+
+Table 3(a):  Variables with clustered observations by descending count
+
+|indx | tax | n   | ptratio | n   | black  |  n   | lstat | n | lstat  | n  |  medv |  n | target |  n
+|-----|-----|----:|---------|----:|--------|-----:|-------|---|--------|----|-------|---:|-------:|----:
+|   1 | 666 | 121 |    20.2 | 128 | 396.90 | 112  |  6.36 | 3 |  6.36  | 31 |  50.0 | 15 |      0 | 237
+|   2 | 307 |  35 |    14.7 |  32 | 393.74 |   3  |  7.79 | 3 |  7.79  | 32 |  22.0 |  7 |      1 | 229
+|   3 | 403 |  28 |    21.0 |  23 | 395.24 |   3  |  8.05 | 3 |  8.05  | 33 |  23.1 |  7 |      - | -
+|   4 | 437 |  14 |    17.8 |  22 | 374.71 |   2  |  3.11 | 2 |  3.11  | 24 |  19.4 |  6 |      - | -
+|   5 | 304 |  13 |    19.2 |  17 | 376.14 |   2  |  3.16 | 2 |  3.16  | 25 |  20.6 |  6 |      - | -
+
+Table 3(b):  Variables with clustered observations cont'd
+
+```{r, eval=FALSE, include=FALSE}
+##zn
+#####  2 groups (trasnformed to binary)
+#####339 zeros
+#####127 ones
+hw3 %>% 
+  group_by(zn) %>% #substitute predictor variables to evaluate each
+    summarise(n = n()) %>% 
+      ungroup() %>% 
+        arrange(desc(n))
+          print(n=5) 
+```
+
+####Analysis of Predictor Variables
+
+
+######% Residential Zoning
+  * `zn` - 
+Residential Zoning is a geographic variable that makes more sense as a binary predictor where we have two types of distinct zoning related to 
+those that explain higher than median crime and those that do not.  
+         
+```{r, eval=TRUE, echo=FALSE} 
+#plots prior to making zoning binary
+par(mfrow=c(2,2))         
+boxplot(zn ~ target, ylab="% Residential Zoning", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(zn, breaks = 30, col = 'yellow')
+          
+#reassign zoned lots as a binary variable
+zn[which(zn > 0)] <- 1
+```
+
+------------------------------
+Revised Descriptive Statistics  
+------------------------------
+
+|    vars |   n	  | mean |   sd	 | median | min |  max |  range | skew | kurtosis | se
+|---------|-------|-----:|------:|-------:|----:|-----:|-------:|-----:|---------:|-----: 
+| zn      |  466  |  .27 |  .45  |      0 |   0 |    1 |      1 |    1 |     -.96 | 0.02
+
+\newpage
+
+-------------
+Distributions  
+-------------
+
+```{r, eval=TRUE, echo=FALSE} 
+par(mfrow=c(2,2))  
+#plots post making zoning binary         
+boxplot(zn ~ target, ylab="% Residential Zoning", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(zn, breaks = 30, col = 'yellow')
+```
+
+######% Non Retail Biz Acres
+  * `indus` - 
+Non Retail Business Acerage is a geographic variable and one of the four with a concentration of more than 25%, 
+121 rows of its data at 18.10, nearly 4 times that of its nearest measure.  Transforming this skew is unlikely 
+to fix this problem leaving three options, discover a valid reason for the clustering, remove or impute the column 
+from the model or impute the 121 rows from the remaining measures under the assumption that these rows were not the product of a random sample and thus bias the outcome.
+
+There is a clear distinction in crime variability by locations with higher crime in neighborhoods that have more non-
+retail business acerage.
+
+-------------
+Distributions  
+-------------
+
+```{r, eval=TRUE, echo=FALSE}    
+par(mar=c(1,1,1,1))
+par(mfrow=c(2,2))
+boxplot(indus ~ target, ylab="% Non Retail Biz Acres", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(indus, breaks = 30, col = 'yellow')
+```
+
+\newpage
+
+######Neighborhood Borders Charles River
+
+  *  `chas` - 
+  
+Neighborhood Bordering the Charles River is a geographic variable that by itself simply shows most neighborhoods don't border the river.
+To make use of this distribution, it can be facetted by neighborhood type (rad) to reveal if there is a distinction between crime in neighborhoods that are adjacent to the river and those that are not.
+
+-------------
+Distributions  
+-------------
+  
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2)) 
+boxplot(chas~target, ylab="Suburb Borders Charles River?", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(chas, breaks = 30, col = 'yellow')            
+``` 
+
+The distribution of the log-transformed median prices for homes adjacent to the Charles River is higher than that of other properties and still skewed slightly to the right.  There is significant variation by neighborhood however whereby proximity to major highways raises the value of the homes. The one exception being that having a radial index of 24 lowers the price of the bulk of the homes. This may indicate that the homes with access to the most radial highways are poorer areas of the inner-city, which would likely be associated with crime.
+
+Median home prices are (mostly) centered around $20,000 across radial highway scores or whether they’re in riverfront neighborhoods.  As the proximity to highways increases a more rightward skew appears suggesting that this proximity raises the value of the homes. The one exception being that having a radial index of 24 lowers the price of the bulk of the homes. This may indicate that the homes with access to the most radial highways are the inner-city, which could be confounded with low-income housing and crime.
+
+The fact that there are few riverfront towns (only 33) makes patterns hard to detect within the group, but on the aggregate we can clearly see that having a house in a riverfront neighborhood does introduce higher home values.
+
+------------------------------------------------------
+Median Housing Price along the Charles (1) and not (0)
+------------------------------------------------------
+
+```{r, eval=FALSE, echo=FALSE} 
+par(mfrow=c(1,2)) 
+## constant
+f.size <- element_text(size=6)
+this.theme <- theme(strip.text.x = f.size, strip.text.y = f.size,
+                    axis.text.x = f.size, axis.text.y = f.size,
+                    axis.title.x = f.size, axis.title.y = f.size)
+b.width <- function(x) sum(c(-1, 1) * range(x))/12
+gg <- ggplot(hw3, aes(medv)) +
+    facet_grid(chas ~ rad, margins=T) +
+    this.theme
+## plot
+gg <- gg + geom_histogram(aes(group = 1, y = ..density..), binwidth=b.width(medv))
+gg <- gg + coord_fixed(ratio = 150)
+gg
+```
+
+Increasing the radial highway index generally increases the median home value. However, the boxplots now reveal a more subtle pattern – there are two distinct increasing trends: from 1 to 3 and from 4 to 8. If the two groups are considered as a whole, we see no overall trend.
+
+We also see that the distribution of median home values is lowest for homes with an index of 24. This group also has the most variability. Again, this may point to median house prices in towns in a city center being confounded with income.
+
+Having two large peaks in the riverfront homes also suggests that we have two main populations of riverfront property – a poor and a rich section.
+
+As we should expect from financial data, we do see right skew in all groups, or at least those with enough members to give the histogram some resolution.
+
+```{r, eval=TRUE, echo=FALSE}
+fmt <- function(x) format(x, nsmall=1, digits=2)
+
+plot.box <- function(box){
+    box + 
+    geom_boxplot() +
+    scale_y_continuous(trans=log_trans(), name="log(medv)", labels=fmt) +
+    geom_hline(yintercept=mean(medv)) +
+    theme(legend.position="none")
+}
+gg <- plot.box(ggplot(hw3, aes(group=rad,x=rad, y=medv, fill=rad)))
+gg <- gg + coord_fixed(ratio = 2)
+gg
+```
+
+
+######Nitrogen Oxide Concentration
+  * `nox` - 
+  This is a geographic variable which is also strongly related to economic status.  Neighborhoods with
+  high levels of nox are likely to be poor, concentrated in the industrial ring of the inner city and 
+  therefore would likely be useful as a predictor of crime.
+  
+  The distribution shows a rightward skew with the boxplot revealing a clear increase in crime at higher
+  levels of nox concentration and by implication in neighborhoods where concentrations are highest.
+  
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2))  
+boxplot(nox~target, ylab="Nitrogen Oxide Concentration",
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(nox, breaks = 30, col = 'yellow')            
+```
+
+######Avg Rooms / Dwelling
+  * `rm` - 
+  This is an economic variable which is also strongly related to median price of a home.
+  
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2))  
+boxplot(rm~target, ylab="Avg Rooms / Dwelling",
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(rm, breaks = 30, col = 'yellow')            
+```
+
+  * `age` - 
+  The percentage of owner occupied dwellings built prior to 1940 is a geographic "neighborhood" variable which may also  
+  indicate economic status.  It has a concentration of ~8%, 42 row of its data at 100, more than 10 times that of its    
+  nearest measure. 
+  
+  The values appear to rise in a somewhat uniform manner until reaching the maximum value of 100 where the count jumps 
+  ten-fold.  There is a clear leftward skew in the distribution and the jump at 100% indicates the likely defaulting of
+  data at the top of the distribution.  
+  
+  Because of this likely censoring of data at the top of the distribution this variable makes more sense as a binary predictor 
+  where we have two distinct types of age related to those that explain higher than median crime and those that do not. 
+          
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2))
+boxplot(hw3$age ~ hw3$target, ylab="% Owner Occ Built < 1940", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(age, breaks = 30, col = 'yellow')    
+
+# Transform age to a binary variable: > 80 = 1
+hw3$age[which(hw3$age <= 80)] <- 0
+hw3$age[which(hw3$age > 80)] <- 1
+summary(hw3$age)
+```
+
+------------------------------
+Revised Descriptive Statistics  
+------------------------------
+
+|    vars |   n	  | mean |   sd	 | median | min |  max |  range | skew | kurtosis | se
+|---------|-------|-----:|------:|-------:|----:|-----:|-------:|-----:|---------:|-----: 
+| age     |  466  |   68 |   28  |     77 |   3 |  100 |     97 |   -1 |    -1.01 | 1.31
+
+
+```{r, eval=TRUE, echo=FALSE} 
+par(mfrow=c(2,2))
+boxplot(hw3$age ~ hw3$target, ylab="% Owner Occ Built < 1940", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(hw3$age, breaks = 30, col = 'yellow')    
+
+
+```
+
+######wm of Distances to Emp Centers
+  * `dis` - 
+    Weighted Mean distance to employment centers is an geographic variable which shows crime related to a slight decrease
+    in distance to employment centers.  There are a number of outliers, the variable is weighted and shows a strong rightward
+    skew.  Facetting by rad may indicate which locations show most variation by proximity to employment centers.
+  
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2))  
+boxplot(rm~target, ylab="wm of Distances to Emp Centers",
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(dis, breaks = 30, col = 'yellow')            
+```
+
+  * `rad` - concentrates ~4%, 121 row of its data on the measure 24.  As an index with only 9 groups in the data 
+            set with integer precision, this data set is likely catagorical.  Since catagorical varibles use coded dummy 
+            values, these values should be ordinal so as to not skew the results.  By recoding the dummy value 24 to 9, the 
+            appearance of 24 as an non-ordinal will be corrected.  There is no expectation for catagorical data to be
+            normally distributed, but the concentration of rows on one measure is problematic.  The choice again is to
+            remove the variable from the model or impute the rows.
+            
+```{r, eval=TRUE, echo=FALSE}                       
+par(mfrow=c(2,2))
+boxplot(hw3$rad ~ hw3$target, ylab="Accessibility to Radial HWYs", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(rad, breaks = 30, col = 'yellow') 
+```
+
+######Full Value Prop Tax Rate / $10K
+  * `tax` - 
+
+full-value property-tax rate per $10,000 is an economic variable where tax rates likely will show significant variation
+by neighborhood.
+
+It has a concentration of more than 25%, 121 rows of its data at 666, nearly 4 times that of its nearest measure.  
+The lack of precision of this data may mean the values or catagorical, but a more plausible explanation is that
+the tax rates simply represent a graduated property tax scale where tax assessments in the higher brackets jump
+more quickly up to the top rate which is a ceiling and therefore captures a large concentration of the population.
+#            
+If the data is complete and valid, it would be wrong to build a model that changes this data, so the question is
+whether to include it.
+            
+```{r, eval=TRUE, echo=FALSE}                           
+par(mfrow=c(2,2))
+boxplot(hw3$tax ~ hw3$target, ylab="Full Value Prop Tax Rate / $10K", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(tax, breaks = 30, col = 'yellow') 
+```
+
+######Pupil/Teacher Ratio     
+  * `ptratio` 
+  Pupil-Teacher ratio is an economic variable based upon the allocation of funds for the schools in the neighboorhood.  The data  
+  shows precision, it is not catagorical data despite the clusters of counts around specific rations.  Once again, this variable has   a concentration of more than 25%, 128 rows of its data at 20.2, exactly 4 times that of its nearest measure.  In this case the   `   concentration is likely formula driven whereby revenue allocated to schools in that neighborhood pays for a certain number of        teachers per student.  
+
+  This data appears also appears to be valid so the concentrated rows are not candidates for removal from the model.
+            
+```{r, eval=TRUE, echo=FALSE}                         
+par(mfrow=c(2,2))
+boxplot(hw3$ptratio ~ hw3$target, ylab="Pupil/Teacher Ratio", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(ptratio, breaks = 30, col = 'yellow') 
+```
+
+
+######Black
+  * `black` Transform black back to a proportion using definition  provided black <- (sqrt(hw3$black) + 19.92235) / 31.62278.
+            It has a concentration of ~25%, 112 rows of its data at 0.6654964 (396.90 before being made a proportion).  Having
+            such a high concentration at one precise proportion is suspect and probably means this data either should be removed
+            or the variable not used as it is unlikely the skew it causes can be transformed.
+            
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2))
+boxplot(hw3$black ~ hw3$target, ylab="Black", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(black, breaks = 30, col = 'yellow') 
+```
+
+######% Lower Status
+  * `lstat` -
+  
+```{r, eval=TRUE, echo=FALSE}                        
+par(mfrow=c(2,2))  
+boxplot(lstat~target, ylab="% Lower Status",
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+hist(lstat, breaks = 30, col = 'yellow')            
+```
+
+######Median Val. Owner Occ in $1K's
+  * `medv` -
+As we saw in the histograms, increasing the radial highway index generally increases the median home value. However, the boxplots now reveal a more subtle pattern – there are two distinct increasing trends: from 1 to 3 and from 4 to 8. If the two groups are considered as a whole, we see no overall trend.
+
+We also see that the distribution of median home values is lowest for homes with an index of 24. This group also has the most variability. Again, this may point to median house prices in towns in a city center being confounded with income.
+
+A linear pattern still is shown most of the rad factors, but we can see in others that log(medv) is fairly constant across the range of lstat.
+
+The slopes are all slightly to moderately negative across most levels of rad.
+
+Additionally, we can see that the fit is best (lowest residual standard error) when rad=4, rad=5, rad=6, and rad=24 by the width of the confidence bands. However, this may be more a function of the small sample size within the other factor levels.
+
+The most interesting feature may be the change in slopes between factor levels, epitomized by the relative lack of slope when rad=6. This is indicative of an interaction between lstat and rad.
+
+```{r, eval=TRUE, echo=FALSE}                        
+gp <- ggplot(hw3, aes(x=lstat, y=medv)) +
+    geom_point() +
+    scale_y_continuous(trans=log_trans(), labels=fmt) +
+    this.theme
+gp <- gp + facet_wrap(~ rad, ncol=2)
+gp <- gp + geom_smooth(method=lm, size=1.5)
+gp
+```
+
+
+#Correlation Between Predictors and Target
+```{r, eval=FALSE, include=FALSE}
+# generate a correlation matrix for the data set
+#round(cor(hw3), 2)
+
+
+```
+
+The initial correlation matrix shows some evidence of potential correlation between various variables, with the .91 covariance indicated for the 'rad' and 'tax' variables being of particular note. However, additional data exploration must be conducted before we can conclude that these initial correlations are offering a valid explanation of the training data.
+
+Valid models should identify predictors with greater than 50% correlation with another predictor in either direction, and carefully consider whether adding both variables adds more value to the model than the redundancy takes away.
+
+-----------
+Correlation
+-----------
+
+|         |   zn | indus | chas |  nox |   rm |  age |  dis |  rad |  tax | ptratio | black |lstat | medv |target
+| ------- | ---: | ---:  | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ------: | ----: | ---: | ---: | ---:   
+| zn      | 1.00 |-0.54  |-0.04 |-0.52 | 0.32 |-0.57 | 0.66 |-0.32 |-0.32 |   -0.39 |  0.18 |-0.43 | 0.38 |-0.43
+| indus   |-0.54 | 1.00  | 0.06 | 0.76 |-0.39 | 0.64 |-0.70 | 0.60 | 0.73 |    0.39 | -0.36 | 0.61 |-0.50 | 0.60
+| chas    |-0.04 | 0.06  | 1.00 | 0.10 | 0.09 | 0.08 |-0.10 |-0.02 |-0.05 |   -0.13 |  0.04 |-0.05 | 0.16 | 0.08
+| nox     |-0.52 | 0.76  | 0.10 | 1.00 |-0.30 | 0.74 |-0.77 | 0.60 | 0.65 |    0.18 | -0.38 | 0.60 |-0.43 | 0.73
+| rm      | 0.32 |-0.39  | 0.09 |-0.30 | 1.00 |-0.23 | 0.20 |-0.21 |-0.30 |   -0.36 |  0.13 |-0.63 | 0.71 |-0.15
+| age     |-0.57 | 0.64  | 0.08 | 0.74 |-0.23 | 1.00 |-0.75 | 0.46 | 0.51 |    0.26 | -0.27 | 0.61 |-0.38 | 0.63
+| dis     | 0.66 |-0.70  |-0.10 |-0.77 | 0.20 |-0.75 | 1.00 |-0.49 |-0.53 |   -0.23 |  0.29 |-0.51 | 0.26 |-0.62
+| rad     |-0.32 | 0.60  |-0.02 | 0.60 |-0.21 | 0.46 |-0.49 | 1.00 | 0.91 |    0.47 | -0.45 | 0.50 |-0.40 | 0.63
+| tax     |-0.32 | 0.73  |-0.05 | 0.65 |-0.30 | 0.51 |-0.53 | 0.91 | 1.00 |    0.47 | -0.44 | 0.56 |-0.49 | 0.61
+| ptratio |-0.39 | 0.39  |-0.13 | 0.18 |-0.36 | 0.26 |-0.23 | 0.47 | 0.47 |    1.00 | -0.18 | 0.38 |-0.52 | 0.25
+| black   | 0.18 |-0.36  | 0.04 |-0.38 | 0.13 |-0.27 | 0.29 |-0.45 |-0.44 |   -0.18 |  1.00 |-0.35 | 0.33 |-0.35
+| lstat   |-0.43 | 0.61  |-0.05 | 0.60 |-0.63 | 0.61 |-0.51 | 0.50 | 0.56 |    0.38 | -0.35 | 1.00 |-0.74 | 0.47
+| medv    | 0.38 |-0.50  | 0.16 |-0.43 | 0.71 |-0.38 | 0.26 |-0.40 |-0.49 |   -0.52 |  0.33 |-0.74 | 1.00 |-0.27
+| target  |-0.43 | 0.60  | 0.08 | 0.73 |-0.15 | 0.63 |-0.62 | 0.63 | 0.61 |    0.25 | -0.35 | 0.47 |-0.27 | 1.00
+
+Table 4:  Covariance of Variables Indicative of Collinearity
+
+####Conclusion of Data Exploration
+
+__--------------------------------------------------------------------------------------------------------------------------__
+
+# Part 5. References
+
+## Bibliography
+Diez, D.M., Barr, C.D., & Çetinkaya-Rundel, M. (2015). OpenIntro Statistics (3rd Ed).
+Faraway, J. J. (2015). Extending linear models with R, Second Edition. Boca Raton, Fla: Chapman & Hall/CRC.
+Faraway, J. J. (2015). Linear models with R, Second Edition. Boca Raton, Fla: Chapman & Hall/CRC.
+Fox, John, and John Fox. Applied Regression Analysis and Generalized Linear Models. Los Angeles: Sage, 2008. Print.
+Sheather, Simon J. A Modern Approach to Regression with R. New York, NY: Springer, 2009. Internet resource. 
+
+
+# Models
+# Model 1
+
+```{r}
+##########################################################################
+library(bestglm)
+library(alr3)
+library(car)
+```
+
+
+```{r, fig.width = 9, fig.height = 7, echo = FALSE}
+hw3 <- read.csv("https://raw.githubusercontent.com/jtopor/CUNY-MSDA-621/master/HW-3/crime-training-data.csv", stringsAsFactors = FALSE)  
+
+attach(hw3)
+
+hw3.t <- hw3
+
+############## zn transformation ##############################
+# 127 zn values > 0
+sum(hw3$zn > 0)
+
+# Transform zn to a binary variable: > 0 = 1 in TRAINING data set
+hw3.t$zn[which(hw3$zn > 0)] <- 1
+hw3.t$zn <- factor(hw3.t$zn)
+summary(hw3.t$zn)
+
+
+############## age transformation ##############################
+# 219 age values > 80
+sum(hw3$age > 80)
+
+# Transform age to a binary variable: > 80 = 1
+hw3.t$age[which(hw3$age > 80)] <- 1
+hw3.t$age[which(hw3$age <= 80)] <- 0
+hw3.t$age <- factor(hw3.t$age)
+summary(hw3.t$age)
+
+
+
+############# black transformation #############################
+# Transform black to proportional number to make the coefficient interpretable
+
+# training data
+hw3.t$black <- (sqrt(hw3$black) + 19.92235) / 31.62278
+
+
+```
+
+```{r echo= FALSE}
+
+# Load R functions for model statistics
+
+accuracy <- function(actual, predicted){
+  
+  # Equation to be modeled: (TP + TN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (TP + TN) / (TP + FP + TN + FN) )
+}
+```
+
+```{r, echo = FALSE}
+classif.err.rate <- function(actual, predicted) {
+  
+  # Equation to be modeled: (FP + FN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (FP + FN) / (TP + FP + TN + FN) )
+}  
+```
+
+
+```{r, echo = FALSE}
+precision <- function(actual, predicted) {
+  
+  # Precision : the proportion of positive cases that were correctly identified.
+  
+  # Equation to be modeled: TP / (TP + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FP) )
+}  
+```
+
+
+```{r, echo = FALSE}
+sensitivity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TP / (TP + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FN) )
+}  
+```
+
+```{r, echo = FALSE}
+specificity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TN / (TN + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TN / (TN + FP) )
+}  
+```
+
+```{r, echo = FALSE}
+F1.Score <- function(actual, predicted) {
+  
+  # Equation to be modeled: ( 2 * precision * sensitivity) / (precision + sensitivity)
+  
+  # now calculate the required metric
+  return( ( 2 * precision(actual, predicted) * sensitivity(actual, predicted)) 
+          / (precision(actual, predicted) + sensitivity(actual, predicted)) )
+}  
+```
+
+
+
+# Model 2 - Logit model through subtraction
+
+```{r}
+#start with CHAS and TAX eliminated
+redo <- glm(data=hw3.t, target~.-chas - tax, family=binomial(link="logit"))
+summary(redo)
+vif(redo)
+
+#remove rm
+redo1 <- glm(data=hw3.t, target~.-chas - tax - rm, family=binomial(link="logit"))
+summary(redo1)
+vif(redo1)
+
+#remove black
+redo2 <- glm(data=hw3.t, target~.-chas - tax - rm - black, family=binomial(link="logit"))
+summary(redo2)
+vif(redo2)
+
+#remove ptratio
+redo3 <- glm(data=hw3.t, target~.-chas - tax - rm - black - ptratio, family=binomial(link="logit"))
+summary(redo3)
+vif(redo3)
+
+#remove lstat
+redo4 <- glm(data=hw3.t, target~.-chas - tax - rm - black - ptratio - lstat, family=binomial(link="logit"))
+summary(redo4)
+vif(redo4)
+
+redo.fit <- round(fitted(redo4))
+
+# ------------------------
+# marginal model plots
+mmps(redo4,layout=c(4,3),key=TRUE)
+
+# ----------------------------
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar.sub <- mean(dlogis(predict(redo4, type = "link")))
+LogitScalar.sub * coef(redo4)
+
+Y <- hw3.t[,14]
+table(true = Y, pred = redo.fit) 
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, redo.fit)
+classif.err.rate(Y, redo.fit)
+precision(Y, redo.fit)
+sensitivity(Y, redo.fit)
+specificity(Y, redo.fit)
+F1.Score(Y, redo.fit)
+
+#look at misses
+hw3t.4 <- hw3.t
+hw3t.4$predict <- fitted(redo4)
+miss.4 <- subset(hw3t.4[which(hw3.t$target != redo.fit),])
+
+
+
+
+#See Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(redo4)$hat
+stanresDeviance <- residuals(redo4)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 8 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+
+#Remove outliers #396, 18, 85, 218, 14
+hw3.o <- hw3.t[-c(14,18,85,218, 396),]
+redo4.1 <- glm(data=hw3.o, target~.-chas - tax - rm - black - ptratio - lstat, family=binomial(link="logit"))
+summary(redo4)
+
+
+
+
+prediction <- round(predict(redo4.1, newdata=hw3.t, type="response"))
+
+table(true = Y, pred = prediction) 
+accuracy(Y, prediction)
+classif.err.rate(Y, prediction)
+precision(Y, prediction)
+sensitivity(Y, prediction)
+specificity(Y, prediction)
+F1.Score(Y, prediction)
+
+par(mfrow=c(1,1))
+hvalues <- influence(redo4.1)$hat
+stanresDeviance <- residuals(redo4.1)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 8 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+#no outliers
+
+```
+
+# Model 3 - Build probit model through stepwise subtraction
+
+```{r}
+#probit - again starting with no TAX and CHAS
+pmod <- glm(data=hw3.t, target~. - tax- chas, family=binomial(link="probit"))
+summary(pmod)
+vif(pmod)
+
+#get rid of rm
+pmod1 <- glm(data=hw3.t, target~. - tax- chas - rm, family=binomial(link="probit"))
+summary(pmod1)
+vif(pmod1)
+
+#get rid of black
+pmod2 <- glm(data=hw3.t, target~. - tax- chas - rm - black, family=binomial(link="probit"))
+summary(pmod2)
+vif(pmod2)
+
+#get rid of lstat
+pmod3 <- glm(data=hw3.t, target~. - tax- chas - rm - black - lstat, family=binomial(link="probit"))
+summary(pmod3)
+vif(pmod3)
+
+
+pmod.fit <- round(fitted(pmod3))
+
+# ------------------------
+# marginal model plots
+
+
+# ----------------------------
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar.sub <- mean(dlogis(predict(pmod3, type = "link")))
+LogitScalar.sub * coef(pmod3)
+
+table(true = Y, pred = pmod.fit) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, pmod.fit)
+classif.err.rate(Y, pmod.fit)
+precision(Y, pmod.fit)
+sensitivity(Y, pmod.fit)
+specificity(Y, pmod.fit)
+F1.Score(Y, pmod.fit)
+
+
+#look for outliers
+
+#See Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(pmod3)$hat
+stanresDeviance <- residuals(pmod3)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 9 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+
+#Remove outliers #396, 18, 85, 14
+hw3.o.p <- hw3.t[-c(14,18,85, 396),]
+pmod3.1 <- glm(data=hw3.o.p, target~. - tax- chas - rm - black - lstat, family=binomial(link="probit"))
+summary(pmod3.1)
+
+#remove ptratio
+pmod3.2 <- glm(data=hw3.o.p, target~. - tax- chas - rm - black - lstat -ptratio, family=binomial(link="probit"))
+summary(pmod3.2)
+prediction.p <- round(predict(pmod3.2, newdata=hw3.t, type="response"))
+
+table(true = Y, pred = prediction.p) 
+accuracy(Y, prediction.p)
+classif.err.rate(Y, prediction.p)
+precision(Y, prediction.p)
+sensitivity(Y, prediction.p)
+specificity(Y, prediction.p)
+F1.Score(Y, prediction.p)
+
+#check for outliers
+par(mfrow=c(1,1))
+hvalues <- influence(pmod3.2)$hat
+stanresDeviance <- residuals(pmod3.2)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '8' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 8 / nrow(hw3.t),lty=2)
+
+
+
+
+
+```
+
+
+# Model 4 - Forward Selection Model
+
+```{r, message = FALSE, warning = FALSE}
+library(bestglm)
+library(alr3)
+library(car)
+library(pROC)
+```
+
+
+
+
+```{r, echo = FALSE}
+
+# Load R functions for model statistics
+
+accuracy <- function(actual, predicted){
+  
+  # Equation to be modeled: (TP + TN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (TP + TN) / (TP + FP + TN + FN) )
+}
+```
+
+```{r, echo = FALSE}
+classif.err.rate <- function(actual, predicted) {
+  
+  # Equation to be modeled: (FP + FN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (FP + FN) / (TP + FP + TN + FN) )
+}  
+```
+
+
+```{r, echo = FALSE}
+precision <- function(actual, predicted) {
+  
+  # Precision : the proportion of positive cases that were correctly identified.
+  
+  # Equation to be modeled: TP / (TP + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FP) )
+}  
+```
+
+
+```{r, echo = FALSE}
+sensitivity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TP / (TP + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FN) )
+}  
+```
+
+```{r, echo = FALSE}
+specificity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TN / (TN + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TN / (TN + FP) )
+}  
+```
+
+```{r, echo = FALSE}
+F1.Score <- function(actual, predicted) {
+  
+  # Equation to be modeled: ( 2 * precision * sensitivity) / (precision + sensitivity)
+  
+  # now calculate the required metric
+  return( ( 2 * precision(actual, predicted) * sensitivity(actual, predicted)) 
+          / (precision(actual, predicted) + sensitivity(actual, predicted)) )
+}  
+```
+
+Load Training Data
+
+```{r, echo = FALSE}
+
+hw3.t <- read.csv("https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/HW-3/621-HW3-Clean-Data.csv")
+
+str(hw3.t)
+
+hw3.t$zn <- factor(hw3.t$zn)
+
+hw3.t$age <- factor(hw3.t$age)
+```
+
+## Model 5: Use the bestglm Function to Build a Model
+
+
+Forward Selection + AIC
+
+* This table shows variables with high correlation where only one per model should be chosen
+
+|  var  |   cor var      
+|-------|--------------        
+|zn:    |  .66 with age
+|indus: |  .76 with nox
+|nox    | -.77 with dis
+|rm     |  .71 with medv
+|age    | -.75 with dis
+|dis    | -.70 with indus
+|rad    |  .91 with tax
+|lstat  | -.74 with medv
+
+
+BUILD MODEL
+```{r, eval = TRUE, fig.width = 9, fig.height = 7, echo = FALSE}
+# Use forward selection strategy to find model with lowest AIC using PREPPED data set (prepped as above)
+# iterate through predictors in descending order of correlation with target
+# avoid highly collinear predictors with each iteration
+
+m1 <- glm(data = hw3.t, target ~ nox, family = binomial(link = "logit"))
+summary(m1)
+
+m2 <- glm(data = hw3.t, target ~ nox + rad, family = binomial(link = "logit"))
+summary(m2)
+
+m3 <- glm(data = hw3.t, target ~ nox + rad + age, family = binomial(link = "logit"))
+summary(m3)
+
+m4 <- glm(data = hw3.t, target ~ nox + rad + age + tax, family = binomial(link = "logit"))
+summary(m4)
+
+m5 <- glm(data = hw3.t, target ~ nox + rad + age + tax + ptratio, family = binomial(link = "logit"))
+summary(m5)
+
+m <- glm(data = hw3.t, target ~ nox + rad + age + tax + ptratio + medv, family = binomial(link = "logit"))
+summary(m)
+
+```
+
+# Find outliers using ~ twice the average leverage
+# Avg leverage is first dotted line ~.015
+# Cutoff leverage is second dotted line ~.030
+
+# Note, the strategy in this model is forward selection and minimizing AIC
+# while maintaining all predictor p-values within .05 significance levels.
+
+# AIC minimization drove selection of outliers first, removing as many as plausible 
+# while staying within customary cutoff threshold
+
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m)$hat
+stanresDeviance <- residuals(m)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '7' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2 * 7 / nrow(hw3.t),lty=2)
+#.015
+
+# Find outliers using ~ twice the average leverage
+abline(v=2 * 14 / nrow(hw3.t),lty=2)
+# .030
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+```
+
+![image](outliers.png)
+Results say remove rows 5,14,18,37,61,67,73,138,154,342,106,130,142,166,205,227,236,240,246,262,263,293,295,323,334,388,398
+```{r, eval = TRUE, echo = TRUE}
+# remove rows 5,14,18,37,61,67,73,138,154,342,106,130,142,166,205,227,236,240,246,262,263,293,295,323,334,388,398 and refit
+hw3.re <- hw3.t[-c(5,14,18,37,61,67,73,138,154,342,106,130,142,166,205,227,236,240,246,262,263,293,295,323,334,388,398),]
+
+# now rebuild
+m.re <- glm(data = hw3.re, target ~ nox + rad + age + tax + ptratio + medv, family = binomial(link = "logit"))
+summary(m.re)
+
+
+# ------------------------
+# marginal model plots
+mmps(m.re,layout=c(4,3),key=TRUE)
+
+```
+
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m.re)$hat
+stanresDeviance <- residuals(m.re)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '7' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2 * 7 / nrow(hw3.re),lty=2)
+#.015
+
+# Find outliers using ~ twice the average leverage
+abline(v=2 * 14 / nrow(hw3.re),lty=2)
+# .030
+
+hw3.names <- as.character(seq(1:nrow(hw3.re)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+```
+
+
+
+STOP
+
+Now run metrics
+```{r, eval = TRUE, echo = TRUE}
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar <- mean(dlogis(predict(m.re, type = "link")))
+LogitScalar * coef(m.re)
+
+# Logit model predicted probabilities - yields likelihood that each eval item is '+'
+# 
+predprob.crime<- round(predict(m.re, type="response"), 2)
+summary(predprob.crime)
+
+# Percent correctly predicted values
+# NOTE: Need to create variable 'Y' for this to work - set it to response variable
+Y <- hw3.re[,14]
+
+pred.crime <- round(fitted(m.re))
+
+table(true = Y, pred = pred.crime) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, pred.crime)
+classif.err.rate(Y, pred.crime)
+precision(Y, pred.crime)
+sensitivity(Y, pred.crime)
+specificity(Y, pred.crime)
+F1.Score(Y, pred.crime)
+
+# get AUC
+rocCurve <- roc(response= Y, predictor= pred.crime)
+auc(rocCurve)
+```
+
+Summary Table:
+
+|   Metric                  |  Value
+|---------------------------|---------
+| Number of Predictors      |    7
+| AIC                       |  199.77
+| Accuracy                  |  0.8975
+| Classification Error Rate |  0.1025 
+| Precision                 |  0.8850
+| Sensitivity               |  0.9132
+| Specificity               |  0.8818
+| F1 Score                  |  0.9104
+| AUC                       |  0.8989
+
+
+
