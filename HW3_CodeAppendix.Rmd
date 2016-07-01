@@ -1,0 +1,1396 @@
+---
+title: "Data 621 Homework 3: Code Appendix"
+author: "Jeff Nieman, Scott Karr, James Topor, Armenoush Aslanian-Persico"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    code_folding: show
+    theme: spacelab
+---
+
+Data 621 Homework 3: Boston Crime
+
+# Part 1. Data Exploration
+
+```{r part1}
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+library(bestglm)
+library(alr3)
+library(car)
+library(pROC)
+```
+
+
+```{r, fig.width = 9, fig.height = 7, echo = FALSE}
+hw3 <- read.csv("https://raw.githubusercontent.com/jtopor/CUNY-MSDA-621/master/HW-3/crime-training-data.csv", stringsAsFactors = FALSE)  
+
+attach(hw3)
+
+summary(hw3)
+
+nrow(hw3)
+
+```
+
+Correlation Matrix of Raw Data
+
+```{r, echo = FALSE}
+# correlation plot
+round(cor(hw3), 2)
+```
+
+The initial correlation matrix shows some evidence of potential correlation between various variables, with the .91 covariance indicated for the 'rad' and 'tax' variables being of particular note. However, additional data exploration must be conducted before we can conclude that these initial correlations are offering a valid explanation of the training data.
+
+Boxplots of each independent variable relative to the binary response variable are one way in which we can begin to gain insight into the predictive aspects of the training data:
+
+```{r, echo = FALSE}
+# box plots of each predictor variable relative to the response
+
+# See Figure 8.8 on page 286
+par(mfrow=c(2,4))
+
+boxplot(zn~target, ylab="% Residential Zoning", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(indus~target, ylab="% Non Retail Biz Acres", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(chas~target, ylab="Suburb Borders Charles River?", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(nox~target, ylab="Nitrogen Oxide Concentration", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(rm~target, ylab="Avg Rooms / Dwelling", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(age~target, ylab="% Owner Occ Built < 1940", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(dis~target, ylab="wm of Distances to Emp Centers", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(rad~target, ylab="Accessibility to Radial HWYs", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+# ---------------------
+par(mfrow=c(2,4))
+
+boxplot(tax~target, ylab="Full Value Prop Tax Rate / $10K", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(ptratio~target, ylab="Pupil/Teacher Ratio", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(black~target, ylab="Black", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(lstat~target, ylab="% Lower Status", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(medv~target, ylab="Median Val. Owner Occ in $1K's", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+# -------------------------------------------------------------------------------
+# comments on individual variables
+
+# - zn
+# check count of zn variable = 0 => 72% of records have zn = 0
+# maybe change to a binary variable? e.g., has zoning for large lots & doesn't?
+# nrow(subset(hw3, hw3$zn == 0)) / nrow(hw3)
+
+```
+
+The boxplots show evidence of skew for several of the predictor variables: the 'zon', 'age', 'rad', 'tax', 'ptratio', and 'black' variables each display asymetrical distributions relative to one or both values of the response variable. Such skew may be the result of the presence of outliers or can simply be reflecting the inherent nature of the variable. For example, we would expect the 'zon' variable to be skewed due simply to what it characterizes, namely the proportion of residential land zoned for large lots. Obviously, most typical neighborhoods are unlikely to have been zoned to allow for such large lots so we should expect most instances of the variable to be either equal to zero or to be relatively small numbers. 
+
+While boxplots are useful for helping to identify potential skew, histograms allow us to more thoroughly examine whether the distribution of a variable is being dominated by a particular set of data values. Histograms for each of the twelve potential predictor variables are provided below.
+
+```{r, fig.width = 9, fig.height = 7, echo = FALSE}
+#####################################################################
+# Make small histograms for each variable
+
+par(mfrow = c(4,3), oma = c(1, 1, 0, 0), mar=c(2, 2, 0, 1) + 2)
+
+
+hist(zn, breaks = 30, col = 'yellow')
+
+# - indus
+# non-symmetric distribution for TARGET == 1.
+# skewed distribution for TARGET == 0
+
+hist(indus, breaks = 30, col = 'yellow')
+
+# - chas
+# remove from model - not correlated with TARGET
+hist(chas, breaks = 30, col = 'yellow')
+
+# - nox
+# TARGET == 0 is slightly skewed while TARGET == 1 isn't 
+hist(nox, breaks = 30, col = 'yellow')
+
+# - rm (rooms)'
+# both are reasonably symmetric
+hist(rm, breaks = 30, col = 'yellow')
+
+# - age
+# TARGET == 1 is skewed
+hist(age, breaks = 30, col = 'yellow')
+
+
+# - rad is skewed for TARGET == 1
+hist(rad, breaks = 30, col = 'yellow')
+
+# - tax is skewed for TARGET == 1
+hist(tax, breaks = 30, col = 'yellow')
+
+# - ptratio is skewed for TARGET == 1
+hist(ptratio, breaks = 30, col = 'yellow')
+
+# - black is skewed
+hist(black, breaks = 30, col = 'yellow')
+
+# transform black back to a proportion
+# bk <- (sqrt(hw3$black) + 19.92235) / 31.62278
+
+# now transform back to validate
+# bk2 <- 1000 * (bk - .63)^2
+
+
+# lstat
+hist(lstat, breaks = 30, col = 'yellow')
+
+
+# medv
+hist(medv, breaks = 30, col = 'yellow')
+```
+
+The histograms show that the 'zon', 'chas', 'black, 'indus', 'rad', 'tax', and 'ptratio' variables each have an unusually large number of identical values. Of these, 'zon' and 'chas' can be explained by their nature: we wouldn't expect 'zon' to have a value greater than zero in most instances and 'chas' is a binary categorical variable that can only assume values of either '0' or '1'. For the 'black' variable it may be the case that many of the neighborhoods represented in the data set have very similar proportions of black residents.
+
+For the 'indus', 'rad', 'tax', and 'ptratio' variables, analysis reveals that 121 rows of the training data contain recurring values for each of these variables. The recurring values are summarized below.
+
+| Variable  | Value |
+|-----------|-------|
+| indus     | 18.1  |
+| rad       | 24    |
+| tax       | 666   |
+| ptratio   | 20.2  |
+
+In fact, further analysis reveals that for the 'indus', 'rad', and 'tax' variables, the values recorded in those 121 rows are distinct relative to the rest of the training data: no other records within the training data set contain those specific recurring values for the indicated variables.
+
+Variable that might be dropped:  CHAS, TAX, (NOX / DIS), (RM / MEDV), (AGE / INDUS)
+
+
+
+
+# Part 2 - Data Preparation
+
+```{r part2}
+```
+
+
+```{r, echo = FALSE}
+
+# read eval data set
+hw3.e <- read.csv("https://raw.githubusercontent.com/jtopor/CUNY-MSDA-621/master/HW-3/crime-evaluation-data.csv")
+
+# add dummy variable 'target' to eval data
+hw3.e$target <- 0
+
+hw3.t <- hw3
+hw3.et <- hw3.e
+
+
+
+############## zn transformation ##############################
+# 127 zn values > 0
+#sum(hw3$zn > 0)
+
+# Transform zn to a binary variable: > 0 = 1 in TRAINING data set
+hw3.t$zn[which(hw3$zn > 0)] <- 1
+hw3.t$zn <- factor(hw3.t$zn)
+# summary(hw3.t$zn)
+
+# ------- eval data set
+# 7 zn values > 0 in eval data
+# sum(hw3.e$zn > 0)
+
+# Transform zn to a binary variable: > 0 = 1 in EVAL data set
+hw3.et$zn[which(hw3.e$zn > 0)] <- 1
+hw3.et$zn <- factor(hw3.et$zn)
+# summary(hw3.et$zn)
+
+############## age transformation ##############################
+# 219 age values > 80
+# sum(hw3$age > 80)
+
+# Transform age to a binary variable: > 80 = 1
+hw3.t$age[which(hw3$age > 80)] <- 1
+hw3.t$age[which(hw3$age <= 80)] <- 0
+hw3.t$age <- factor(hw3.t$age)
+# summary(hw3.t$age)
+
+
+# ----------------------------------------------------------
+# 21 age values > 80
+# sum(hw3.e$age > 80)
+
+# Transform age to a binary variable: > 80 = 1
+hw3.et$age[which(hw3.e$age > 80)] <- 1
+hw3.et$age[which(hw3.e$age <= 80)] <- 0
+hw3.et$age <- factor(hw3.et$age)
+# summary(hw3.et$age)
+
+
+
+############# black transformation #############################
+# Transform black to proportional number to make the coefficient interpretable
+
+# training data
+hw3.t$black <- round( (sqrt(hw3$black) + 19.92235) / 31.62278, 4)
+
+# eval data
+hw3.et$black <- round( (sqrt(hw3.e$black) + 19.92235) / 31.62278, 4)
+```
+
+```{r, eval = FALSE, echo = FALSE}
+# now write prepped data sets to csv files
+
+# set the path relative to your own local environment
+# write.csv(hw3.t, file = "C:/SQLData/621-HW3-Clean-Data.csv", row.names = FALSE)
+
+# write.csv(hw3.et, file = "C:/SQLData/621-HW3-Clean-EvalData-.csv", row.names = FALSE)
+```
+
+
+# Part 3 - Build Models
+
+```{r part3}
+```
+
+
+
+```{r, echo = FALSE}
+
+# Load R functions for model statistics
+
+accuracy <- function(actual, predicted){
+  
+  # Equation to be modeled: (TP + TN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (TP + TN) / (TP + FP + TN + FN) )
+}
+```
+
+```{r, echo = FALSE}
+classif.err.rate <- function(actual, predicted) {
+  
+  # Equation to be modeled: (FP + FN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (FP + FN) / (TP + FP + TN + FN) )
+}  
+```
+
+
+```{r, echo = FALSE}
+precision <- function(actual, predicted) {
+  
+  # Precision : the proportion of positive cases that were correctly identified.
+  
+  # Equation to be modeled: TP / (TP + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FP) )
+}  
+```
+
+
+```{r, echo = FALSE}
+sensitivity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TP / (TP + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FN) )
+}  
+```
+
+```{r, echo = FALSE}
+specificity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TN / (TN + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TN / (TN + FP) )
+}  
+```
+
+```{r, echo = FALSE}
+F1.Score <- function(actual, predicted) {
+  
+  # Equation to be modeled: ( 2 * precision * sensitivity) / (precision + sensitivity)
+  
+  # now calculate the required metric
+  return( ( 2 * precision(actual, predicted) * sensitivity(actual, predicted)) 
+          / (precision(actual, predicted) + sensitivity(actual, predicted)) )
+}  
+```
+
+Load Training Data
+
+```{r, echo = FALSE}
+
+hw3.t <- read.csv("https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/HW-3/621-HW3-Clean-Data.csv")
+
+str(hw3.t)
+
+hw3.t$zn <- factor(hw3.t$zn)
+
+hw3.t$age <- factor(hw3.t$age)
+```
+
+
+
+# Model 1: Use the bestglm Function to Build a Model
+
+```{r model1}
+```
+
+
+
+Use all variables + AIC
+
+```{r, eval = FALSE, fig.width = 9, fig.height = 7, echo = FALSE}
+
+# Use __bestglm__ function to find model with lowest AIC using PREPPED data set (prepped as above)
+# build a model using all potential predictors
+
+X <- hw3.t[, 1:13]
+y <- hw3.t[, 14]
+
+xy <- cbind(as.data.frame(X), y)
+
+# method = backward search: yields same result as exhaustive
+best.bm <- bestglm(xy, family = binomial(link = "logit"), IC = "AIC", method = "backward")
+
+# show best models - best has lowest AIC (see "Criterion" column)
+best.bm$BestModels
+
+# show results for BEST overall model
+summary(best.bm$BestModel)
+# vif(m1)
+
+# now rebuild by hand so that mmps function can work with it
+m1 <- glm(data = hw3.t, target ~ zn + indus + nox + age + dis + rad + tax + ptratio + black + lstat + medv, family = binomial(link = "logit"))
+summary(m1)
+```
+
+
+__Check for outliers: This MUST be done by hand - the identify function requires that you click on points that are of interest to you so that it can label them. Does not seem possible to use this in a writeup.__
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m1)$hat
+stanresDeviance <- residuals(m1)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 12 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+```
+
+
+Results say remove rows 14, 18, 159
+```{r, eval = FALSE, echo = FALSE}
+# remove rows 14, 18, 159 and refit
+hw3.re <- hw3.t[-c(14, 18, 159),]
+
+# build a model using all potential predictors
+
+X <- hw3.re[, 1:13]
+y <- hw3.re[, 14]
+
+xy <- cbind(as.data.frame(X), y)
+
+# method = backward search: yields same result as exhaustive
+best.bm <- bestglm(xy, family = binomial(link = "logit"), IC = "AIC", method = "backward")
+
+# show best models - best has lowest AIC (see "Criterion" column)
+best.bm$BestModels
+
+# show results for BEST overall model
+summary(best.bm$BestModel)
+# vif(m1)
+
+# now rebuild by hand so that mmps function can work with it
+m.re <- glm(data = hw3.re, target ~ zn + indus + chas + nox + age + dis + rad + tax + ptratio + black + medv, family = binomial(link = "logit"))
+summary(m.re)
+
+# ------------------------
+# marginal model plots
+mmps(m.re,layout=c(4,3),key=TRUE)
+
+```
+
+
+Now check for outliers again
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m.re)$hat
+stanresDeviance <- residuals(m.re)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 12 / nrow(hw3.re),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.re)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+```
+
+Results say remove 152, 83, 215
+
+```{r, eval = FALSE, echo = FALSE}
+# remove rows 14, 18, 159 and refit
+hw3.re <- hw3.re[-c(83, 152, 215),]
+
+# build a model using all potential predictors
+
+X <- hw3.re[, 1:13]
+y <- hw3.re[, 14]
+
+xy <- cbind(as.data.frame(X), y)
+
+# method = backward search: yields same result as exhaustive
+best.bm <- bestglm(xy, family = binomial(link = "logit"), IC = "AIC", method = "backward")
+
+# show best models - best has lowest AIC (see "Criterion" column)
+best.bm$BestModels
+
+# show results for BEST overall model
+summary(best.bm$BestModel)
+# vif(m1)
+
+# now rebuild by hand so that mmps function can work with it
+m.re <- glm(data = hw3.re, target ~ zn + indus + chas + nox + age + dis + rad + tax + ptratio + black + medv, family = binomial(link = "logit"))
+summary(m.re)
+
+# ------------------------
+# marginal model plots
+mmps(m.re,layout=c(4,3),key=TRUE)
+
+```
+
+
+STOP
+
+Now run metrics
+```{r, eval = FALSE, echo = FALSE}
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar <- mean(dlogis(predict(m.re, type = "link")))
+LogitScalar * coef(m.re)
+
+# Logit model predicted probabilities - yields likelihood that each eval item is '+'
+# 
+predprob.crime<- round(predict(m.re, type="response"), 2)
+summary(predprob.crime)
+
+# Percent correctly predicted values
+# NOTE: Need to create variable 'Y' for this to work - set it to response variable
+Y <- hw3.re[,14]
+
+pred.crime <- round(fitted(m.re))
+
+table(true = Y, pred = pred.crime) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, pred.crime)
+classif.err.rate(Y, pred.crime)
+precision(Y, pred.crime)
+sensitivity(Y, pred.crime)
+specificity(Y, pred.crime)
+F1.Score(Y, pred.crime)
+
+# get AUC
+rocCurve <- roc(response= Y, predictor= pred.crime)
+auc(rocCurve)
+```
+
+Summary Table:
+
+|   Metric                  |  Value
+|---------------------------|---------
+| Number of Predictors      |    11
+| AIC                       |  189.46
+| Accuracy                  |  0.9239
+| Classification Error Rate |  0.0761 
+| Precision                 |  0.9357
+| Sensitivity               |  0.9067
+| Specificity               |  0.9404
+| F1 Score                  |  0.9211
+| AUC                       |  0.9235
+
+
+
+
+
+### Bestglm using BIC
+
+```{r, eval = FALSE, fig.width = 9, fig.height = 7}
+
+# build a model using all potential predictors
+
+X <- hw3.t[, 1:13]
+y <- hw3.t[, 14]
+
+xy <- cbind(as.data.frame(X), y)
+
+# method = backward search: yields same result as exhaustive
+best.bm <- bestglm(xy, family = binomial(link = "logit"), IC = "BIC", method = "backward")
+
+# show best models - best has lowest AIC (see "Criterion" column)
+best.bm$BestModels
+
+# show results for BEST overall model
+summary(best.bm$BestModel)
+# vif(m1)
+
+# now rebuild by hand so that mmps function can work with it
+m.bic <- glm(data = hw3.t, target ~ nox + age + rad + tax, family = binomial(link = "logit"))
+summary(m.bic)
+
+
+# ------------------------
+# marginal model plots
+mmps(m.bic,layout=c(4,3),key=TRUE)
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar <- mean(dlogis(predict(m.bic, type = "link")))
+LogitScalar * coef(m.bic)
+# Logit model predicted probabilities - yields likelihood that each eval item is '+'
+# 
+predprob.crime<- round(predict(m.bic, type="response"), 2)
+summary(predprob.crime)
+
+# Percent correctly predicted values
+# NOTE: Need to create variable 'Y' for this to work - set it to response variable
+Y <- hw3.t[,14]
+
+pred.crime <- round(fitted(m.bic))
+
+table(true = Y, pred = pred.crime) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, pred.crime)
+classif.err.rate(Y, pred.crime)
+precision(Y, pred.crime)
+sensitivity(Y, pred.crime)
+specificity(Y, pred.crime)
+F1.Score(Y, pred.crime)
+
+# get AUC
+rocCurve <- roc(response= Y, predictor= pred.crime)
+auc(rocCurve)
+
+```
+
+
+__Check for outliers: This MUST be done by hand - the identify function requires that you click on points that are of interest to you so that it can label them. Does not seem possible to use this in a writeup.__
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m.bic)$hat
+stanresDeviance <- residuals(m.bic)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 5 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+```
+
+NO OUTLIERS!!!
+
+Summary Table:
+
+|   Metric                  |  Value
+|---------------------------|---------
+| Number of Predictors      |    4
+| AIC                       |  227.34
+| Accuracy                  |  0.8777
+| Classification Error Rate |  0.1223 
+| Precision                 |  0.8874
+| Sensitivity               |  0.8603
+| Specificity               |  0.8945
+| F1 Score                  |  0.8736
+| AUC                       |  0.8774
+
+
+
+
+
+
+
+
+# Model 2: Logit Model Using Backward Selection
+
+```{r model2}
+```
+
+
+```{r}
+#start with CHAS and TAX eliminated
+redo <- glm(data=hw3.t, target~.-chas - tax, family=binomial(link="logit"))
+summary(redo)
+vif(redo)
+
+#remove rm
+redo1 <- glm(data=hw3.t, target~.-chas - tax - rm, family=binomial(link="logit"))
+summary(redo1)
+vif(redo1)
+
+#remove black
+redo2 <- glm(data=hw3.t, target~.-chas - tax - rm - black, family=binomial(link="logit"))
+summary(redo2)
+vif(redo2)
+
+#remove ptratio
+redo3 <- glm(data=hw3.t, target~.-chas - tax - rm - black - ptratio, family=binomial(link="logit"))
+summary(redo3)
+vif(redo3)
+
+#remove lstat
+redo4 <- glm(data=hw3.t, target~.-chas - tax - rm - black - ptratio - lstat, family=binomial(link="logit"))
+summary(redo4)
+vif(redo4)
+
+redo.fit <- round(fitted(redo4))
+
+# ------------------------
+# marginal model plots
+mmps(redo4,layout=c(4,3),key=TRUE)
+
+# ----------------------------
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar.sub <- mean(dlogis(predict(redo4, type = "link")))
+LogitScalar.sub * coef(redo4)
+
+Y <- hw3.t[,14]
+table(true = Y, pred = redo.fit) 
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, redo.fit)
+classif.err.rate(Y, redo.fit)
+precision(Y, redo.fit)
+sensitivity(Y, redo.fit)
+specificity(Y, redo.fit)
+F1.Score(Y, redo.fit)
+
+#look at misses
+hw3t.4 <- hw3.t
+hw3t.4$predict <- fitted(redo4)
+miss.4 <- subset(hw3t.4[which(hw3.t$target != redo.fit),])
+
+#AUC
+rocCurve <- roc(response= Y, predictor= redo.fit)
+auc(rocCurve)
+
+
+
+#See Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(redo4)$hat
+stanresDeviance <- residuals(redo4)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 8 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+
+#Remove outliers #396, 18, 85, 218, 14
+hw3.o <- hw3.t[-c(14,18,85,218, 396),]
+redo4.1 <- glm(data=hw3.o, target~.-chas - tax - rm - black - ptratio - lstat, family=binomial(link="logit"))
+summary(redo4)
+
+
+
+
+prediction <- round(predict(redo4.1, newdata=hw3.t, type="response"))
+
+table(true = Y, pred = prediction) 
+accuracy(Y, prediction)
+classif.err.rate(Y, prediction)
+precision(Y, prediction)
+sensitivity(Y, prediction)
+specificity(Y, prediction)
+F1.Score(Y, prediction)
+
+par(mfrow=c(1,1))
+hvalues <- influence(redo4.1)$hat
+stanresDeviance <- residuals(redo4.1)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 8 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+#no outliers
+
+#AUC
+rocCurve <- roc(response= Y, predictor= prediction)
+auc(rocCurve)
+
+
+```
+
+
+
+# Model 3: Probit Model Using Backward Selection
+
+```{r model3}
+```
+
+
+```{r}
+#probit - again starting with no TAX and CHAS
+pmod <- glm(data=hw3.t, target~. - tax- chas, family=binomial(link="probit"))
+summary(pmod)
+vif(pmod)
+
+#get rid of rm
+pmod1 <- glm(data=hw3.t, target~. - tax- chas - rm, family=binomial(link="probit"))
+summary(pmod1)
+vif(pmod1)
+
+#get rid of black
+pmod2 <- glm(data=hw3.t, target~. - tax- chas - rm - black, family=binomial(link="probit"))
+summary(pmod2)
+vif(pmod2)
+
+#get rid of lstat
+pmod3 <- glm(data=hw3.t, target~. - tax- chas - rm - black - lstat, family=binomial(link="probit"))
+summary(pmod3)
+vif(pmod3)
+
+
+pmod.fit <- round(fitted(pmod3))
+
+# ------------------------
+# marginal model plots
+
+
+# ----------------------------
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar.sub <- mean(dlogis(predict(pmod3, type = "link")))
+LogitScalar.sub * coef(pmod3)
+
+table(true = Y, pred = pmod.fit) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, pmod.fit)
+classif.err.rate(Y, pmod.fit)
+precision(Y, pmod.fit)
+sensitivity(Y, pmod.fit)
+specificity(Y, pmod.fit)
+F1.Score(Y, pmod.fit)
+
+#auc
+rocCurve <- roc(response= Y, predictor= pmod.fit)
+auc(rocCurve)
+
+#look for outliers
+
+#See Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(pmod3)$hat
+stanresDeviance <- residuals(pmod3)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '12' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 9 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+
+#Remove outliers #396, 18, 85, 14
+hw3.o.p <- hw3.t[-c(14,18,85, 396),]
+pmod3.1 <- glm(data=hw3.o.p, target~. - tax- chas - rm - black - lstat, family=binomial(link="probit"))
+summary(pmod3.1)
+
+#remove ptratio
+pmod3.2 <- glm(data=hw3.o.p, target~. - tax- chas - rm - black - lstat -ptratio, family=binomial(link="probit"))
+summary(pmod3.2)
+prediction.p <- round(predict(pmod3.2, newdata=hw3.t, type="response"))
+
+table(true = Y, pred = prediction.p) 
+accuracy(Y, prediction.p)
+classif.err.rate(Y, prediction.p)
+precision(Y, prediction.p)
+sensitivity(Y, prediction.p)
+specificity(Y, prediction.p)
+F1.Score(Y, prediction.p)
+
+#auc
+rocCurve <- roc(response= Y, predictor= prediction.p)
+auc(rocCurve)
+
+#check for outliers
+par(mfrow=c(1,1))
+hvalues <- influence(pmod3.2)$hat
+stanresDeviance <- residuals(pmod3.2)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '8' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2* 8 / nrow(hw3.t),lty=2)
+
+
+#SCott's model updated
+
+
+# BUILD MODEL
+```
+
+```{r, eval = TRUE, fig.width = 9, fig.height = 7, echo = FALSE, eval=FALSE}
+
+# Use forward selection strategy to find model with lowest AIC using PREPPED data set (prepped as above)
+# iterate through predictors in descending order of correlation with target
+# avoid highly collinear predictors with each iteration
+
+m1 <- glm(data = hw3.t, target ~ nox, family = binomial(link = "logit"))
+summary(m1)
+
+m2 <- glm(data = hw3.t, target ~ nox + rad, family = binomial(link = "logit"))
+summary(m2)
+
+m3 <- glm(data = hw3.t, target ~ nox + rad + age, family = binomial(link = "logit"))
+summary(m3)
+
+m4 <- glm(data = hw3.t, target ~ nox + rad + age + tax, family = binomial(link = "logit"))
+summary(m4)
+
+m5 <- glm(data = hw3.t, target ~ nox + rad + age + tax + ptratio, family = binomial(link = "logit"))
+summary(m5)
+
+m <- glm(data = hw3.t, target ~ nox + rad + age + tax + ptratio + medv, family = binomial(link = "logit"))
+summary(m)
+
+
+m.fit <- round(fitted(m))
+
+# ------------------------
+# marginal model plots
+
+
+# ----------------------------
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar.sub <- mean(dlogis(predict(m.fit,type = "link")))
+LogitScalar.sub * coef(m.fit)
+
+table(true = Y, pred = m.fit) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, m.fit)
+classif.err.rate(Y, m.fit)
+precision(Y, m.fit)
+sensitivity(Y, m.fit)
+specificity(Y, m.fit)
+F1.Score(Y, m.fit)
+
+#auc
+rocCurve <- roc(response= Y, predictor= m.fit)
+auc(rocCurve)
+
+```
+
+__Check for outliers: This MUST be done by hand - the identify function requires that you click on points that are of interest to you so that it can label them. Does not seem possible to use this in a writeup.__
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m)$hat
+stanresDeviance <- residuals(m)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '7' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2 * 7 / nrow(hw3.t),lty=2)
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+
+![image](outliers.png)
+
+```
+
+
+There are no outliers.
+
+
+
+
+# Model 4: Forward Selection + AIC
+
+```{r model4}
+```
+
+
+
+```{r, message = FALSE, warning = FALSE}
+library(bestglm)
+library(alr3)
+library(car)
+library(pROC)
+```
+
+
+
+```{r, echo = FALSE}
+
+# Load R functions for model statistics
+
+accuracy <- function(actual, predicted){
+  
+  # Equation to be modeled: (TP + TN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (TP + TN) / (TP + FP + TN + FN) )
+}
+```
+
+```{r, echo = FALSE}
+classif.err.rate <- function(actual, predicted) {
+  
+  # Equation to be modeled: (FP + FN) / (TP + FP + TN + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( (FP + FN) / (TP + FP + TN + FN) )
+}  
+```
+
+
+```{r, echo = FALSE}
+precision <- function(actual, predicted) {
+  
+  # Precision : the proportion of positive cases that were correctly identified.
+  
+  # Equation to be modeled: TP / (TP + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FP) )
+}  
+```
+
+
+```{r, echo = FALSE}
+sensitivity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TP / (TP + FN)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TP / (TP + FN) )
+}  
+```
+
+```{r, echo = FALSE}
+specificity <- function(actual, predicted) {
+  
+  # Equation to be modeled: TN / (TN + FP)
+  
+  # derive confusion matrix cell values
+  c.mat <- data.frame(table(actual, predicted))
+  
+  # extract all four confusion matrix values from the data frame
+  TN <- as.numeric(as.character(c.mat[1,3]))
+  FN <- as.numeric(as.character(c.mat[2,3]))
+  FP <- as.numeric(as.character(c.mat[3,3]))
+  TP <- as.numeric(as.character(c.mat[4,3]))
+  
+  # now calculate the required metric
+  return( TN / (TN + FP) )
+}  
+```
+
+```{r, echo = FALSE}
+F1.Score <- function(actual, predicted) {
+  
+  # Equation to be modeled: ( 2 * precision * sensitivity) / (precision + sensitivity)
+  
+  # now calculate the required metric
+  return( ( 2 * precision(actual, predicted) * sensitivity(actual, predicted)) 
+          / (precision(actual, predicted) + sensitivity(actual, predicted)) )
+}  
+```
+
+Load Training Data
+
+```{r, echo = FALSE}
+
+hw3.t <- read.csv("https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/HW-3/621-HW3-Clean-Data.csv")
+
+str(hw3.t)
+
+hw3.t$zn <- factor(hw3.t$zn)
+
+hw3.t$age <- factor(hw3.t$age)
+```
+
+## Use the bestglm Function to Build a Model
+
+
+Forward Selection + AIC
+
+* This table shows variables with high correlation where only one per model should be chosen
+
+|  var  |   cor var      
+|-------|--------------        
+|zn:    |  .66 with age
+|indus: |  .76 with nox
+|nox    | -.77 with dis
+|rm     |  .71 with medv
+|age    | -.75 with dis
+|dis    | -.70 with indus
+|rad    |  .91 with tax
+|lstat  | -.74 with medv
+
+
+BUILD MODEL
+```{r, eval = TRUE, fig.width = 9, fig.height = 7, echo = FALSE}
+# Use forward selection strategy to find model with lowest AIC using PREPPED data set (prepped as above)
+# iterate through predictors in descending order of correlation with target
+# avoid highly collinear predictors with each iteration
+
+m1 <- glm(data = hw3.t, target ~ nox, family = binomial(link = "logit"))
+summary(m1)
+
+m2 <- glm(data = hw3.t, target ~ nox + rad, family = binomial(link = "logit"))
+summary(m2)
+
+m3 <- glm(data = hw3.t, target ~ nox + rad + age, family = binomial(link = "logit"))
+summary(m3)
+
+m4 <- glm(data = hw3.t, target ~ nox + rad + age + tax, family = binomial(link = "logit"))
+summary(m4)
+
+m5 <- glm(data = hw3.t, target ~ nox + rad + age + tax + ptratio, family = binomial(link = "logit"))
+summary(m5)
+
+m <- glm(data = hw3.t, target ~ nox + rad + age + tax + ptratio + medv, family = binomial(link = "logit"))
+summary(m)
+
+```
+
+```{r}
+# Find outliers using ~ twice the average leverage
+# Avg leverage is first dotted line ~.015
+# Cutoff leverage is second dotted line ~.030
+
+# Note, the strategy in this model is forward selection and minimizing AIC
+# while maintaining all predictor p-values within .05 significance levels.
+
+# AIC minimization drove selection of outliers first, removing as many as plausible 
+# while staying within customary cutoff threshold
+```
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m)$hat
+stanresDeviance <- residuals(m)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '7' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2 * 7 / nrow(hw3.t),lty=2)
+#.015
+
+# Find outliers using ~ twice the average leverage
+abline(v=2 * 14 / nrow(hw3.t),lty=2)
+# .030
+
+hw3.names <- as.character(seq(1:nrow(hw3.t)))
+
+
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+
+# ![image](outliers.png)
+```
+
+
+Results say remove rows 5,14,18,37,61,67,73,138,154,342,106,130,142,166,205,227,236,240,246,262,263,293,295,323,334,388,398
+
+```{r, eval = TRUE, echo = TRUE}
+# remove rows 5,14,18,37,61,67,73,138,154,342,106,130,142,166,205,227,236,240,246,262,263,293,295,323,334,388,398 and refit
+hw3.re <- hw3.t[-c(5,14,18,37,61,67,73,138,154,342,106,130,142,166,205,227,236,240,246,262,263,293,295,323,334,388,398),]
+
+# now rebuild
+m.re <- glm(data = hw3.re, target ~ nox + rad + age + tax + ptratio + medv, family = binomial(link = "logit"))
+summary(m.re)
+
+
+# ------------------------
+# marginal model plots
+mmps(m.re,layout=c(4,3),key=TRUE)
+
+```
+
+
+```{r, eval = FALSE, echo = FALSE}
+#Figure 8.13 on page 291
+par(mfrow=c(1,1))
+hvalues <- influence(m.re)$hat
+stanresDeviance <- residuals(m.re)/sqrt(1-hvalues)
+
+plot(hvalues,stanresDeviance,ylab="Standardized Deviance Residuals",
+     xlab="Leverage Values",ylim=c(-3,3),xlim=c(-0.05,0.7))
+
+# NOTE: the '7' indicated here is found by adding 1 to the number of predictor variables
+# used in the final model
+abline(v=2 * 7 / nrow(hw3.re),lty=2)
+#.015
+
+# Find outliers using ~ twice the average leverage
+abline(v=2 * 14 / nrow(hw3.re),lty=2)
+# .030
+
+hw3.names <- as.character(seq(1:nrow(hw3.re)))
+
+# need to click on potential outliers using the mouse and then click "finish" in the plot window
+identify(hvalues, stanresDeviance, labels = hw3.names, cex=0.75)
+```
+
+
+
+STOP
+
+Now run metrics
+```{r, eval = TRUE, echo = TRUE}
+# Coefficient Interpretation
+
+# Logit model average marginal effects - use it to generate interpretable versions of coefficients
+LogitScalar <- mean(dlogis(predict(m.re, type = "link")))
+LogitScalar * coef(m.re)
+
+# Logit model predicted probabilities - yields likelihood that each eval item is '+'
+# 
+predprob.crime<- round(predict(m.re, type="response"), 2)
+summary(predprob.crime)
+
+# Percent correctly predicted values
+# NOTE: Need to create variable 'Y' for this to work - set it to response variable
+Y <- hw3.re[,14]
+
+pred.crime <- round(fitted(m.re))
+
+table(true = Y, pred = pred.crime) 
+
+
+# t.r <- data.frame(table(true = Y, pred = pred.crime))
+# t.r
+
+# now use functions built in HW 2 to get required statistics
+accuracy(Y, pred.crime)
+classif.err.rate(Y, pred.crime)
+precision(Y, pred.crime)
+sensitivity(Y, pred.crime)
+specificity(Y, pred.crime)
+F1.Score(Y, pred.crime)
+
+# get AUC
+rocCurve <- roc(response= Y, predictor= pred.crime)
+auc(rocCurve)
+```
+
+Summary Table:
+
+|   Metric                  |  Value
+|---------------------------|---------
+| Number of Predictors      |    7
+| AIC                       |  199.77
+| Accuracy                  |  0.8975
+| Classification Error Rate |  0.1025 
+| Precision                 |  0.8850
+| Sensitivity               |  0.9132
+| Specificity               |  0.8818
+| F1 Score                  |  0.9104
+| AUC                       |  0.8989
+
+
+# Part 4. Select Models
+
+
+```{r, eval = FALSE}
+accuracy(hw2$class, hw2$scored.class)
+classif.err.rate(hw2$class, hw2$scored.class)
+precision(hw2$class, hw2$scored.class)
+sensitivity(hw2$class, hw2$scored.class)
+specificity(hw2$class, hw2$scored.class)
+F1.Score(hw2$class, hw2$scored.class)
+
+rocCurve <- roc(response=actual, predictor=predicted)
+# r <- plot(rocCurve, legacy.axes = TRUE)
+auc(rocCurve)
+  
+
+
+```
