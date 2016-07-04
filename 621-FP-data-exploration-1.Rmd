@@ -66,15 +66,20 @@ We have 15 potential predictor variables and one response variable ("RENEWAL_FLA
 ## Analysis of Predictor Variables  
 
   
-```{r, fig.width = 7.5, fig.height = 8.5, echo = FALSE, eval=FALSE}
+```{r, fig.width = 7.5, fig.height = 8.5, echo = FALSE}
 # box plots of each predictor variable relative to the response
 
-# See Figure 8.8 on page 286
-par(mfrow=c(4,4))
 
-boxplot(zn~target, ylab="zn", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+# par(mfrow=c(4,4))
 
+boxplot(ITEM_COUNT~RENEWAL_FLAG, ylab="ITEM_COUNT", 
+        xlab="Renewals", col = "yellow")
+
+plot(fp1$RENEWAL_FLAG.category, fp1$CONTRACT_VALUE.category, xlab = "RENEWAL", ylab = "Contract Value")
+```
+
+
+```{r, eval=FALSE}
 boxplot(indus~target, ylab="indus", 
         xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
 
