@@ -39,7 +39,12 @@ kable(ddict)
 ## Summary Statistics
 
 ```{r, fig.width = 9, fig.height = 7, include = TRUE, echo=FALSE}
-url <- "https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-not-transformed.csv"
+#url <- "https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-not-transformed.csv"
+
+url <- "https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-renewals-as-1.csv"
+
+
+
 
 fp1 <- read.csv(url, stringsAsFactors = TRUE)  
 
@@ -70,54 +75,35 @@ We have 15 potential predictor variables and one response variable ("RENEWAL_FLA
 # box plots of each predictor variable relative to the response
 
 
-# par(mfrow=c(4,4))
+# par(mfrow=c(4,4)) 
+
+mosaicplot(~ RENEWAL_FLAG + AREA, data = fp1, color = TRUE)
+
+mosaicplot(~ RENEWAL_FLAG + CHANNEL_APPROACH, data = fp1, color = TRUE)
+
+# placeholder CONTRACT_EXPIRATION
+
+mosaicplot(~ RENEWAL_FLAG + CONTRACT_LENGTH, data = fp1, color = TRUE)
+
+mosaicplot(~ RENEWAL_FLAG + SALES_CATEGORY, data = fp1, color = TRUE)
+
+# placeholder SELLER_UNIQUE_ID
+
+mosaicplot(~ RENEWAL_FLAG + CONTRACT_VALUE_CATEGORY, data = fp1, color = TRUE)
+
+mosaicplot(~ RENEWAL_FLAG + CONTRACT_LINE_CATEGORY, data = fp1, color = TRUE)
+
+mosaicplot(~ RENEWAL_FLAG + DISCOUNT_CATEGORY, data = fp1, color = TRUE)
+
+mosaicplot(~ RENEWAL_FLAG + MULTIPLE_SERVICES, data = fp1, color = TRUE)
 
 boxplot(ITEM_COUNT~RENEWAL_FLAG, ylab="ITEM_COUNT", 
         xlab="Renewals", col = "yellow")
 
-plot(fp1$RENEWAL_FLAG.category, fp1$CONTRACT_VALUE.category, xlab = "RENEWAL", ylab = "Contract Value")
-```
+# placeholder COST
 
+mosaicplot(~ RENEWAL_FLAG + SALES_STRATEGY, data = fp1, color = TRUE)
 
-```{r, eval=FALSE}
-boxplot(indus~target, ylab="indus", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(chas~target, ylab="chas", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(nox~target, ylab="nox", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(rm~target, ylab="rm", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(age~target, ylab="age", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(dis~target, ylab="dis", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(rad~target, ylab="rad", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-# ---------------------
-# par(mfrow=c(2,4))
-
-boxplot(tax~target, ylab="tax", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(ptratio~target, ylab="ptratio", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(black~target, ylab="Black", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(lstat~target, ylab="lstat", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
-
-boxplot(medv~target, ylab="medv", 
-        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
 ```
 
 
