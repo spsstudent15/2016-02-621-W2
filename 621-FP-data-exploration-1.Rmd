@@ -26,9 +26,19 @@ library(fBasics)
 
 # Part 1: Data Exploration
 
-## Data Summary 
+## Data Dictionary
 
-```{r, fig.width = 9, fig.height = 7, include = TRUE}
+```{r, echo=FALSE}
+url1 <- "https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-dictionary.csv"
+
+ddict <- read.csv(url1, stringsAsFactors = FALSE)  
+
+kable(ddict)
+```
+
+## Summary Statistics
+
+```{r, fig.width = 9, fig.height = 7, include = TRUE, echo=FALSE}
 url <- "https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-not-transformed.csv"
 
 fp1 <- read.csv(url, stringsAsFactors = TRUE)  
@@ -105,6 +115,8 @@ boxplot(medv~target, ylab="medv",
         xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
 ```
 
+
+## Missing Data to be Imputed
 
 
 The transformed data set can be seen here:

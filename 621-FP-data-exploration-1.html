@@ -233,15 +233,113 @@ div.tocify {
 
 <div id="part-1-data-exploration" class="section level1">
 <h1>Part 1: Data Exploration</h1>
-<div id="data-summary" class="section level2">
-<h2>Data Summary</h2>
-<pre class="r"><code>url &lt;- &quot;https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-not-transformed.csv&quot;
-
-fp1 &lt;- read.csv(url, stringsAsFactors = TRUE)  
-
-attach(fp1)
-
-summary(fp1)</code></pre>
+<div id="data-dictionary" class="section level2">
+<h2>Data Dictionary</h2>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Item</th>
+<th align="left">Variable.Name</th>
+<th align="left">Definition</th>
+<th align="left">Theoretical.Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">Index</td>
+<td align="left">Unique identifier (key) for a distinct service contract.</td>
+<td align="left">None</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">Area</td>
+<td align="left">Location where the service was sold.</td>
+<td align="left">Unknown effect</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="left">Service Approach</td>
+<td align="left">S is a particular service model. All other services are labeled not S.</td>
+<td align="left">The theory is that S will be much more effective than anything else we offer.</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="left">Channel Approach</td>
+<td align="left">We sell services largely through other companies. This reflects two different channel models.</td>
+<td align="left">Unknown effect</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="left">Renewal Flag</td>
+<td align="left">The key variable  whether or not a contract renewed. If it did not renew it is now an expired contract representing lost business.</td>
+<td align="left">N/A - Variable to predict</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="left">Contract Expiration Date</td>
+<td align="left">The date the contract expired or if renewed when it will expire.</td>
+<td align="left">Unknown effect</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="left">Contract Length</td>
+<td align="left">Annual or multi-year renewal.</td>
+<td align="left">Multi-year contracts may be more likely to renew.</td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="left">Sales Category</td>
+<td align="left">Different categories of clients.</td>
+<td align="left">Unknown effect</td>
+</tr>
+<tr class="odd">
+<td align="right">9</td>
+<td align="left">Seller Unique ID</td>
+<td align="left">Unique idenitfier for the actual seller of the service on behalf of the company.</td>
+<td align="left">Certain sellers may be more likely to renew.</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="left">Contract Value Category</td>
+<td align="left">Buckets for contract value based on net (i.e. discounted price).</td>
+<td align="left">Discounted contracts may be more likely to renew.</td>
+</tr>
+<tr class="odd">
+<td align="right">11</td>
+<td align="left">Contract Line Category</td>
+<td align="left">Buckets based on items on the contract. Less than 10 is very small, 10-49 is small, 50-99 is medium, 100-999 is large and greater than 999 is very large.</td>
+<td align="left">Contracts with more items may be more likely torenew.</td>
+</tr>
+<tr class="even">
+<td align="right">12</td>
+<td align="left">Discount Category</td>
+<td align="left">Buckets representining the amount of discount applied from the catalogue price of the contract. Discounts are earned based on loyalty, length of contract, system configuration and geography.</td>
+<td align="left">Discounted contracts may be more likely to renew.</td>
+</tr>
+<tr class="odd">
+<td align="right">13</td>
+<td align="left">Multiple Services</td>
+<td align="left">Flag to call out whether there is more than one service approach on the contract. When there is more than 1 the highest value service is called out in the Service Approach column.</td>
+<td align="left">Unknown effect</td>
+</tr>
+<tr class="even">
+<td align="right">14</td>
+<td align="left">Item Count</td>
+<td align="left">Count of the items under service on the contract.</td>
+<td align="left">Contracts with more items may be more likely torenew.</td>
+</tr>
+<tr class="odd">
+<td align="right">15</td>
+<td align="left">Cost</td>
+<td align="left">Catalogue cost for the service requested on the items of the contract.</td>
+<td align="left">Unknown effect</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="summary-statistics" class="section level2">
+<h2>Summary Statistics</h2>
 <pre><code>##      INDEX                    AREA       SERVICE_APPROACH CHANNEL_APPROACH
 ##  Min.   :    1   USA            :67978   NOT S:32817      FIRST :43042    
 ##  1st Qu.:22932   CANADA         : 6679   S    :58909      SECOND:48684    
@@ -282,7 +380,6 @@ summary(fp1)</code></pre>
 ##                 
 ##                 
 ## </code></pre>
-<pre class="r"><code>kable(head(fp1))</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -419,148 +516,14 @@ summary(fp1)</code></pre>
 <p>Our data set contains recent service contracts with Company X, some of which were renewed and some which were not renewed. Our goal is to predict whether a service contract will be renewed based on the attributes in the data set. A renewal is considered successful.</p>
 <p>There are 91726 rows of data, each representing a service contract with Company X.</p>
 <p>We have 15 potential predictor variables and one response variable (“RENEWAL_FLAG”) that indicates if the contract was renewed.</p>
-<p>A summary table for the data set is provided below.</p>
-<pre class="r"><code>|    vars |   n   | mean |   sd  | median | min |  max |  range | skew | kurtosis | se
-|---------|-------|-----:|------:|-------:|----:|-----:|-------:|-----:|---------:|-----: 
-| zn      |  466  |   12 |   23  |      0 |   0 |  100 |    100 |    2 |     3.81 | 1.08
-| indus   |  466  |   11 |    7  |     10 |   0 |   28 |     28 |    0 |    -1.24 | 0.32
-| chas    |  466  |    0 |    0  |      0 |   0 |    1 |      1 |    3 |     9.15 | 0.01
-| nox     |  466  |    1 |    0  |      1 |   0 |    1 |      0 |    1 |    -0.04 | 0.01
-| rm      |  466  |    6 |    1  |      6 |   4 |    9 |      5 |    0 |     1.54 | 0.03
-| age     |  466  |   68 |   28  |     77 |   3 |  100 |     97 |   -1 |    -1.01 | 1.31
-| dis     |  466  |    4 |    2  |      3 |   1 |   12 |     11 |    1 |     0.47 | 0.10
-| rad     |  466  |   10 |    9  |      5 |   1 |   24 |     23 |    1 |    -0.86 | 0.40
-| tax     |  466  |  410 |  168  |    335 | 187 |  711 |    524 |    1 |    -1.15 | 7.78
-| ptratio |  466  |   18 |    2  |     19 |  13 |   22 |      9 |   -1 |    -0.40 | 0.10
-| black   |  466  |  357 |   91  |    391 |   0 |  397 |    397 |   -3 |     7.34 | 4.23
-| lstat   |  466  |   13 |    7  |     11 |   2 |   38 |     36 |    1 |     0.50 | 0.33
-| medv    |  466  |   23 |    9  |     21 |   5 |   50 |     45 |    1 |     1.37 | 0.43
-| target  |  466  |    0 |    1  |      0 |   0 |    1 |      1 |    0 |    -2.00 | 0.02
-
-Our analysis of the data yielded no evidence of missing data values. Some variables such as 'zn', 'age', 'rad', and 'tax', show evidence of significant skew as indicated by the large differences between their mean and median values, while 'black' shows evidence of potentially being problematic as evidenced by its large kurtosis and standard error values.</code></pre>
 </div>
 <div id="analysis-of-predictor-variables" class="section level2">
 <h2>Analysis of Predictor Variables</h2>
-<p>Boxplots of each independent variable relative to the binary response are one way in which we can further investigate potential skew issues while also gaining insight into the predictive aspects of the data:</p>
-<p>The boxplots shown above indicate that our skew suspicions regarding the ‘zn’, ‘age’, ‘rad’, and ‘tax’ variables appear to have been justified. Furthermore, we are able to deduce some predictive aspects of the variables in relation to the response variable. For example, it appears as though larger values for ‘zn’, ‘rm’, ‘dis’, and ‘medv’ will each tend to <em>decrease</em> the likelihood that a neighborhood will have an above-median crime rate, while larger values for ‘indus’, ‘nox’, ‘age’, ‘rad’, ‘tax’, ‘ptratio’, and ‘lstat’ will each tend to <em>increase</em> the likelihood of an above-median crime rate for a given neighborhood.</p>
-<p>Histograms allow us to more thoroughly examine whether the distribution of a variable is skewed as well as whether there may be high incidence of specific variable values throughout the data set:</p>
-<p>The histograms again demonstrate the skew issues we’ve previously identified while also indicating that the distributions of many of the skewed variables may be dominated by high frequencies of specific data values. For example, ‘zn’, ‘indus’, ‘chas’, ‘age’, ‘rad’, ‘tax’, ‘ptratio’, and ‘black’ all appear to not only be skewed, but also have a large number of data values “clustered” around a specific number.</p>
-<p>Aggregating variable values by their frequencies allows us to assess whether any distinctive clustering effects occur within the data. For example, the ‘indus’, ‘rad’, ‘tax’, and ‘ptratio’ variables each have an unusually large number of identical values. Analysis reveals that 121 rows of the data set contain recurring values for each of these variables.</p>
-<p>The ‘zn’, ‘age’ and ‘black’ variables also show evidence of clustering on a single data value, though not entirely coincidental with the 121 rows mentioned above for the ‘indus’, ‘rad’, ‘tax’, and ‘ptratio’ variables.</p>
-<p>Further analysis reveals that more than 70% of the values for ‘zn’ are zeroes, indicating that the variable may be a good candidate for conversion to a binary ‘0/1’ indicator where all non-zero values are converted to 1’s. Similarly, analysis of the boxplot for the ‘age’ variable indicates that the vast majority of instances where ‘age’ matches up to a postive value for the response variable occur for values of (age &gt; 80). As such, ‘age’ also appears to be a strong candidate for conversion to a binary ‘0/1’ indicator, with all values of (age &gt; 80) converted to 1’s while values of (age &lt;= 80) are converted to zeroes.</p>
-<p>The reason for the clustering of values for the ‘black’ variable is much more difficult to interpret due to the nature of the variable itself: its values are calculated using a quadratic equation whose meaning is unclear. However, a component of that equation is a simple proportion, which <em>can</em> be easily interpreted. Therefore, the ‘black’ variable is also a strong candidate for transformation during Data Preparation.</p>
-<p>Variables that show such high frequencies of specific values cannot easily be transformed without information loss. For example, analysis of the geographic variable ‘rad’ reveals that ‘rad’ in some ways may be an indicator of the economic status of a neighborhood, and economic status may be a significant indicator of crime rates. As such, transformation of such values during data preparation must only be attempted after careful consideration of the consequences.</p>
-<p>The table below summarizes the clustering observed for these six variables.</p>
-<table>
-<thead>
-<tr class="header">
-<th align="left">Attribute</th>
-<th align="left">Most Common Value</th>
-<th align="left">Times Repeated</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">zn</td>
-<td align="left">0</td>
-<td align="left">339</td>
-</tr>
-<tr class="even">
-<td align="left">ptratio</td>
-<td align="left">20.2</td>
-<td align="left">128</td>
-</tr>
-<tr class="odd">
-<td align="left">indus</td>
-<td align="left">18.10</td>
-<td align="left">121</td>
-</tr>
-<tr class="even">
-<td align="left">tax</td>
-<td align="left">666</td>
-<td align="left">121</td>
-</tr>
-<tr class="odd">
-<td align="left">rad</td>
-<td align="left">24</td>
-<td align="left">121</td>
-</tr>
-<tr class="even">
-<td align="left">black</td>
-<td align="left">396.90</td>
-<td align="left">112</td>
-</tr>
-</tbody>
-</table>
-<p>The clustering of these data values can be strongly indicative of collinearity amongst the respective variables. We can identify prospective collinear variables through the use of a correlation matrix.</p>
-<div id="correlation-matrix" class="section level4">
-<h4>Correlation Matrix</h4>
-<p>A correlation matrix for the full data set is provided below. As can be seen in the matrix, several variables appear to be more than (+/-) 0.50 correlated with the response variable, including ‘indus’, ‘nox’, ‘age’, ‘dis’, ‘rad’, and ‘tax’. Variables exhibiting such relatively high correlation with the response variable should be of particular interest for purposes of constructing an effective binary logistic regression model.</p>
-<pre class="r"><code>The correlation matrix also shows that several of the potential predictor variables are correlated with each other. Such relatively high correlations are usually an indication of collinearity between the respective variables. The table below summarizes the largest such correlations:
-
-| Variable | Correlated w/      
-|----------|--------------        
-|zn        |  .66 with age
-|indus     |  .76 with nox
-|nox       | -.77 with dis
-|rm        |  .71 with medv
-|age       | -.75 with dis
-|dis       | -.70 with indus
-|rad       |  .91 with tax
-|lstat     | -.74 with medv
-
-Many of these correlations appear to make sense from an intuitive perspective. For example, the correlation between `tax` and `rad`, suggests that neighborhoods with relatively better access to radial highways in the Boston area also have relatively high property tax rates. Similarly, the median value of homes (medv) appears to be highly correlated with the average number of rooms per dwelling (rm). Nitrous oxide levels (nox) appear to be higher in neighborhoods with relatively high levels of industrial zoning (indus), etc.
-
-Such strong correlations can to be used during model building to select what are expected to be significant predictors of the response variable while helping to avoid the potential inclusion of additional variables that may be collinear to those already included. For example, the 'tax' variable might justifiably be dropped from consideration during model building due to its high correlation with the 'rad' variable.
-
-The correlation matrix also shows that the 'chas' variable is not highly correlated with either the target variable or any of the other predictor variables. Additional analysis shows that only 33 out of the 466 rows in the data set have a non-zero value for 'chas'. In other words, the 'chas' variable does not appear to be imparting much substantive information within the context of the other variables and could justifiably be dropped from consideration for inclusion in any regression models.
-
-
-####Conclusion of Data Exploration
-During our data exploration efforts we identified one variable (chas) that can justifiably be ignored during model building, and we identified several instances of significant correlation amongst various predictor variables that could serve as justification for dropping one or more other variables from the model building process. Furthermore, we identified 121 rows of data that, due to recurring variable values, require further investigation to determine whether or not additional action might be required to make use of those rows in our analysis. Finally, we identified three variables ('zn', 'age' and 'black') that are good candidates for transformation during the Data Preparation process. 
-
-__--------------------------------------------------------------------------------------------------------------------------__
-
-# Part 2 - Data Preparation
-
-Our Data Preparation efforts included an investigation of what appeared to have been an abnormally large number of records within the data set having shared values, proposing the conversion of two predictor variables to binary &quot;0/1&quot; factor variables, and simplifying the interpretation of the 'black' variable via mathematical transformation. While we also considered the possibility of transforming one or more of the predictor variables that have skewed distributions, we chose not to apply any such transforms prior to model building since normal distributions aren't necessarily required for logistical regression modeling. Transforms can be applied if the marginal model plots for a logistic regression model show evidence of deviance between the modeled data and the actual data, but aren't required prior to model building.
-
-## Step 1: Investigation of Recurring Variable Values
-
-Our data exploration work showed evidence of 121 out of 466 neighborhoods within the training data set having recurring values for each of four variables: 'indus', 'rad', 'tax', and 'ptratio'. Initially, this seemingly anomolous repetition of values across such a large percentage of the data led us to question whether those 121 records were, in fact, legitimate, and might perhaps be candidates for some sort of transformation (e.g., replacing the recurring value via imputation or use of a mean or median) or even removal from the data set prior to building models so as to minimize the skew they obviously produce in the distributions of the four affected variables.
-
-However, we concluded that such clustering could legitimately be explained by each of those 121 neighborhoods being located within the bounds of a single municipality. If that is, in fact, the case then we would expect each neighborhood to have identical proportions of non-retail business acres per suburb (as indicated by 'indus'), identical indices of accessibility to radial highways (as indicated by 'rad'), identical full-value property-tax rate per $10,000 (as indicated by 'tax'), and identical pupil-teacher ratios (as indicated by 'ptratio'). Therefore, it was decided that no action was required to address that aspect of the data.
-
-## Step 2: Converting the 'zn' Variable to a Binary '0/1' Factor
-
-Our analysis of the 'zn' variable indicated that nearly 73% of its values were zeroes, with the remaining 27% being postive values ranging between 12.5 and 100 (inclusive). Since the variable is meant to indicate &quot;*the proportion of residential land zoned for large lots*&quot; within a neighborhood, we concluded it was reasonable to assume that nearly 73% of neighborhoods within the data set have no such zoning. Therefore, we believe a conversion of the variable to a binary '0/1' factor indicative of whether or not a neighborhood has such zoning is justified. 
-
-The 'zn' variable was transformed via simple threshholding where all non-zero values were converted to '1', yielding the following interpretation:
-
-- zn = 0: the neighborhood has __no__ residential land zoned for large lots
-- zn = 1: the neighborhood __has__ residential land zoned for large lots
-
-## Step 3: Converting the 'age' Variable to a Binary '0/1' Factor
-
-The 'age' variable is meant to represent &quot;*the proportion of owner-occupied units built prior to 1940.*&quot; Our analysis of the variable's boxplots led us to conclude that the vast majority of instances where the crime rate was deemed to be above the median occurred in neighborhoods where $age &gt; 80$. Therefore, we believe a conversion of the variable to a binary '0/1' factor indicating whether or not a neighborhood has more than 80% of its owner-occupied units built prior to 1940 is justified.
-
-The 'age' variable was transformed via simple threshholding where all values greater than 80 were converted to '1', and all values less than or equal to 80 were converted to '0', yielding the following interpretation:
-
-- age = 0: the proportion of owner-occupied units built prior to 1940 is &lt;= 80
-- age = 1: the proportion of owner-occupied units built prior to 1940 is &gt; 80
-
-## Step 4: Transforming the 'black' Variable into a Proportion
-
-The 'black' variable is defined as the result of the mathematical formula  $1000(Bk - 0.63)^2$ where __Bk__  is &quot;*the proportion of blacks by town*&quot;. The exact meaning of this metric is very difficult to interpret: we can see that __Bk__ is a proportion that has a clear meaning, but no explanation has been provided as to what the other components of the equation are necessary for.
-
-However, through simple algebra we can transform the variable so that we are left with only the proportion __Bk__, which __*is*__ an understandable metric for our purposes. Rearranging the formula for 'black' yields the following equation for the proportion __Bk__:
-
-$$Bk = (\sqrt black + 19.92235) / 31.62278$$
-
-Applying this formula to the 'black' variable changes its meaning to: *&quot;the proportion of blacks by town&quot;*.</code></pre>
+</div>
+<div id="missing-data-to-be-imputed" class="section level2">
+<h2>Missing Data to be Imputed</h2>
 <p>The transformed data set can be seen here:</p>
 <p><a href="https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-Transformed-Data.csv" class="uri">https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-Transformed-Data.csv</a></p>
-</div>
 </div>
 </div>
 
