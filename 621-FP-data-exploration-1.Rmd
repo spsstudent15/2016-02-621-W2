@@ -1,0 +1,114 @@
+---
+title: 'Data 621 Final Project: Contract Renewal Predictions'
+author: Critical Thinking Group 2 - James Topor, Armenoush Aslanian-Persico, Jeff
+  Nieman, Scott Karr
+date: "July 2016"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    code_folding: show
+    theme: spacelab
+---
+
+```{r, eval=TRUE, echo=FALSE, include=FALSE}
+library(alr3)
+library(bestglm)
+library(car)
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(lmtest)
+library(fBasics)
+```
+
+
+# Part 1: Data Exploration
+
+## Data Summary 
+
+```{r, fig.width = 9, fig.height = 7, include = TRUE}
+url <- "https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-data-not-transformed.csv"
+
+fp1 <- read.csv(url, stringsAsFactors = TRUE)  
+
+attach(fp1)
+
+summary(fp1)
+
+kable(head(fp1))
+```
+
+```{r}
+#basicStats(fp1)
+
+```
+
+
+Our data set contains recent service contracts with Company X, some of which were renewed and some which were not renewed. Our goal is to predict whether a service contract will be renewed based on the attributes in the data set. A renewal is considered successful. 
+
+There are 91726 rows of data, each representing a service contract with Company X. 
+
+We have 15 potential predictor variables and one response variable ("RENEWAL_FLAG") that indicates if the contract was renewed.  
+
+
+## Analysis of Predictor Variables  
+
+  
+```{r, fig.width = 7.5, fig.height = 8.5, echo = FALSE, eval=FALSE}
+# box plots of each predictor variable relative to the response
+
+# See Figure 8.8 on page 286
+par(mfrow=c(4,4))
+
+boxplot(zn~target, ylab="zn", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(indus~target, ylab="indus", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(chas~target, ylab="chas", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(nox~target, ylab="nox", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(rm~target, ylab="rm", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(age~target, ylab="age", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(dis~target, ylab="dis", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(rad~target, ylab="rad", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+# ---------------------
+# par(mfrow=c(2,4))
+
+boxplot(tax~target, ylab="tax", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(ptratio~target, ylab="ptratio", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(black~target, ylab="Black", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(lstat~target, ylab="lstat", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+
+boxplot(medv~target, ylab="medv", 
+        xlab="Crime Above Median (0=No, 1=Yes)", col = "yellow")
+```
+
+
+
+The transformed data set can be seen here:
+
+https://raw.githubusercontent.com/spsstudent15/2016-02-621-W2/master/621-FP-Transformed-Data.csv
+
+

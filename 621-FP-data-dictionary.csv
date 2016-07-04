@@ -1,0 +1,16 @@
+Item,Variable Name,Definition,Theoretical Effect
+1,Index,Unique identifier (key) for a distinct service contract.,None
+2,Area,Location where the service was sold.,Unknown effect
+3,Service Approach,S is a particular service model. All other services are labeled not S. ,The theory is that S will be much more effective than anything else we offer.
+4,Channel Approach,We sell services largely through other companies. This reflects two different channel models.,Unknown effect
+5,Renewal Flag,The key variable – whether or not a contract renewed. If it did not renew it is now an expired contract representing lost business.,N/A - Variable to predict
+6,Contract Expiration Date,The date the contract expired or if renewed when it will expire.,Unknown effect
+7,Contract Length,Annual or multi-year renewal.,Multi-year contracts may be more likely to renew.
+8,Sales Category,Different categories of clients.,Unknown effect
+9,Seller Unique ID,Unique idenitfier for the actual seller of the service on behalf of the company. ,Certain sellers may be more likely to renew.
+10,Contract Value Category,Buckets for contract value based on net (i.e. discounted price).,Discounted contracts may be more likely to renew.
+11,Contract Line Category,"Buckets based on items on the contract. Less than 10 is very small, 10-49 is small, 50-99 is medium, 100-999 is large and greater than 999 is very large.",Contracts with more items may be more likely torenew.
+12,Discount Category,"Buckets representining the amount of discount applied from the catalogue price of the contract. Discounts are earned based on loyalty, length of contract, system configuration and geography.",Discounted contracts may be more likely to renew.
+13,Multiple Services,Flag to call out whether there is more than one service approach on the contract. When there is more than 1 the highest value service is called out in the Service Approach column.,Unknown effect
+14,Item Count,Count of the items under service on the contract.,Contracts with more items may be more likely torenew.
+15,Cost,Catalogue cost for the service requested on the items of the contract.,Unknown effect
