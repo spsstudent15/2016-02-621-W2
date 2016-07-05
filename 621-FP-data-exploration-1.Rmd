@@ -68,8 +68,7 @@ There are 91726 rows of data, each representing a service contract with Company 
 We have 15 potential predictor variables and one response variable ("RENEWAL_FLAG") that indicates if the contract was renewed.  
 
 
-## Analysis of Predictor Variables  
-
+## Boxplots and Mosaic Plots
   
 ```{r, fig.width = 7.5, fig.height = 8.5, echo = FALSE}
 # box plots of each predictor variable relative to the response
@@ -107,8 +106,282 @@ mosaicplot(~ RENEWAL_FLAG + SALES_STRATEGY, data = fp1, color = TRUE)
 ```
 
 
-## Missing Data to be Imputed
+## Histograms
 
+
+```{r, fig.width = 9, fig.height = 7, echo = FALSE, eval=FALSE}
+#####################################################################
+# Make small histograms for each variable
+
+par(mfrow = c(4,3), oma = c(1, 1, 0, 0), mar=c(2, 2, 0, 1) + 2)
+
+
+hist(AREA, breaks = 30, col = 'yellow')
+
+hist(SERVICE_APPROACH, breaks = 30, col = 'yellow')
+
+hist(CHANNEL_APPROACH, breaks = 30, col = 'yellow')
+
+hist(CONTRACT_EXPIRATION, breaks = 30, col = 'yellow')
+
+
+hist(CONTRACT_LENGTH, breaks = 30, col = 'yellow')
+
+```
+
+
+
+# Part 2: Data Preparation
+
+## Variables to be Transformed
+
+
+```{r, eval=FALSE}
+fp.data <- read.csv("c:/users/hammer/documents/Data Science Docs/CUNY MSDA 621/Summer 2016/Final Project/fin proj.csv", stringsAsFactors = FALSE)
+
+# create a copy of the original data to use for transforming individual variables
+fp.t <- fp.data
+
+```
+
+
+
+```{r, message = FALSE, warning = FALSE}
+
+# load packages
+
+```
+
+start our data transformation....
+
+1.  Area - go for USA=1 and not USA = 2
+```{r, eval=FALSE}
+# transform AREA: USA = 1; !USA = 2
+
+fp.t$AREA[which(fp.data$AREA == 'USA')] <- 1
+fp.t$AREA[which(fp.data$AREA != 'USA')] <- 2
+
+# now convert column to numeric since it is char
+fp.t$AREA <- as.numeric(fp.t$AREA)
+
+# check results
+summary(fp.t$AREA)
+```
+
+
+2.  SERVICE_APPROACH - go for Service Approach S=1 or not S = 0
+```{r, eval=FALSE}
+# transform SERVICE_APPROACH: S = 1; !S = 0
+
+fp.t$SERVICE_APPROACH[which(fp.data$SERVICE_APPROACH == 'S')] <- 1
+fp.t$SERVICE_APPROACH[which(fp.data$SERVICE_APPROACH != 'S')] <- 0
+
+# now convert column to numeric since it is char
+fp.t$SERVICE_APPROACH <- as.numeric(fp.t$SERVICE_APPROACH)
+
+# check results
+summary(fp.t$SERVICE_APPROACH)
+
+```
+
+
+3.  CHANNEL_APPROACH - call it tier with second =1 and first =0
+```{r, eval=FALSE}
+# transform CHANNEL: rename to TIER with second = 1; first = 0
+
+fp.t$CHANNEL_APPROACH[which(fp.data$CHANNEL_APPROACH == 'SECOND')] <- 1
+fp.t$CHANNEL_APPROACH[which(fp.data$CHANNEL_APPROACH == 'FIRST')] <- 0
+
+# now convert column to numeric since it is char
+fp.t$CHANNEL_APPROACH <- as.numeric(fp.t$CHANNEL_APPROACH)
+
+# check results
+summary(fp.t$CHANNEL_APPROACH)
+
+# now rename column to TIER
+colnames(fp.t)[colnames(fp.t)=="CHANNEL_APPROACH"] <- "TIER"
+
+head(fp.t$TIER)
+
+```
+
+4.  RENEWAL_FLAG - renewed = 1, not renewed = 0
+```{r, eval=FALSE}
+# transform RENEWAL_FLAG: RENEWED = 1; NOT RENEWED = 0
+
+fp.t$RENEWAL_FLAG[which(fp.data$RENEWAL_FLAG == 'RENEWED')] <- 1
+fp.t$RENEWAL_FLAG[which(fp.data$RENEWAL_FLAG == 'NOT RENEWED')] <- 0
+
+# now convert column to numeric since it is char
+fp.t$RENEWAL_FLAG <- as.numeric(fp.t$RENEWAL_FLAG)
+
+# check results
+summary(fp.t$RENEWAL_FLAG)
+
+```
+
+
+5.  Contract expiration date - ignore
+
+__NO ACTION TAKEN__
+
+
+6. CONTRACT_LENGTH - could go with annual = 1 and multi-year = 3 (most common value for each)
+
+```{r, eval=FALSE}
+# transform CONTRACT_LENGTH: ANNUAL = 1; MULTI-YEAR = 3
+
+fp.t$CONTRACT_LENGTH[which(fp.data$CONTRACT_LENGTH == 'ANNUAL')] <- 1
+fp.t$CONTRACT_LENGTH[which(fp.data$CONTRACT_LENGTH == 'MULTI-YEAR')] <- 3
+
+# now convert column to numeric since it is char
+fp.t$CONTRACT_LENGTH <- as.numeric(fp.t$CONTRACT_LENGTH)
+
+# check results
+summary(fp.t$CONTRACT_LENGTH)
+
+```
+
+
+7. Sales category - would separate into 3 new columns - ENT = 1, not ENT = 0, PS = 1, not PS=0, COM = 1, not COM = 0
+
+```{r, eval=FALSE}
+# transform SALES_CATEGORY - create 3 new columns COM, ENT, PS
+
+# build COM column
+# first check count of COM entries
+sum(fp.data$SALES_CATEGORY == 'COM')
+
+fp.t$COM <- 0
+fp.t$COM[fp.data$SALES_CATEGORY == 'COM'] <- 1
+# make sure new column matches original
+sum(fp.t$ENT == 1)
+
+# ---------------------------------
+# build ENT column
+sum(fp.data$SALES_CATEGORY == 'ENT')
+
+fp.t$ENT <- 0
+fp.t$ENT[fp.data$SALES_CATEGORY == 'ENT'] <- 1
+sum(fp.t$ENT == 1)
+
+# ---------------------------------
+# build PS column
+sum(fp.data$SALES_CATEGORY == 'PS')
+
+fp.t$PS <- 0
+fp.t$PS[fp.data$SALES_CATEGORY == 'PS'] <- 1
+sum(fp.t$PS == 1)
+
+
+```
+
+8. Seller_unique ID - not relevant for binary conversation - too complex
+
+__NO ACTION TAKEN__
+
+
+
+9.  CONTRACT_VALUE_CATEGORY - going to bet it is collinear with cost and can be ignored - or could rank 1 to 5 lowest to highest buckets
+
+```{r, eval=FALSE}
+# transform CONTRACT_VALUE_CATEGORY: <10k = 0, 10K-25K = 1, etc..
+
+fp.t$CONTRACT_VALUE_CATEGORY[which(fp.data$CONTRACT_VALUE_CATEGORY == '<10K')] <- 0
+fp.t$CONTRACT_VALUE_CATEGORY[which(fp.data$CONTRACT_VALUE_CATEGORY == '10K-25K')] <- 1
+fp.t$CONTRACT_VALUE_CATEGORY[which(fp.data$CONTRACT_VALUE_CATEGORY == '25K-50K')] <- 2
+fp.t$CONTRACT_VALUE_CATEGORY[which(fp.data$CONTRACT_VALUE_CATEGORY == '50K-100K')] <- 3
+fp.t$CONTRACT_VALUE_CATEGORY[which(fp.data$CONTRACT_VALUE_CATEGORY == '100K-250K')] <- 4
+fp.t$CONTRACT_VALUE_CATEGORY[which(fp.data$CONTRACT_VALUE_CATEGORY == '>250K')] <- 5
+
+# now convert column to numeric since it is char
+fp.t$CONTRACT_VALUE_CATEGORY <- as.numeric(fp.t$CONTRACT_VALUE_CATEGORY)
+
+# check results
+summary(fp.t$CONTRACT_VALUE_CATEGORY)
+
+```
+
+10.  CONTRACT_LINE_CATEGORY- going to bet it is collinear with item count and can be ignored - or could rank 1 to 5 with lowest to highest category
+
+```{r, eval=FALSE}
+# transform CONTRACT_LINE_CATEGORY: VERY SMALL = 1, SMALL = 2, MEDIUM = 3, LARGE = 4, 
+# VERY LARGE = 5
+
+fp.t$CONTRACT_LINE_CATEGORY[which(fp.data$CONTRACT_LINE_CATEGORY == 'VERY SMALL')] <- 1
+fp.t$CONTRACT_LINE_CATEGORY[which(fp.data$CONTRACT_LINE_CATEGORY == 'SMALL')] <- 2
+fp.t$CONTRACT_LINE_CATEGORY[which(fp.data$CONTRACT_LINE_CATEGORY == 'MEDIUM')] <- 3
+fp.t$CONTRACT_LINE_CATEGORY[which(fp.data$CONTRACT_LINE_CATEGORY == 'LARGE')] <- 4
+fp.t$CONTRACT_LINE_CATEGORY[which(fp.data$CONTRACT_LINE_CATEGORY == 'VERY LARGE')] <- 5
+
+# now convert column to numeric since it is char
+fp.t$CONTRACT_LINE_CATEGORY <- as.numeric(fp.t$CONTRACT_LINE_CATEGORY)
+
+# check results
+summary(fp.t$CONTRACT_LINE_CATEGORY)
+
+```
+
+11.  DISCOUNT_CATEGORY - could go with no or some or call no 0, small 10, medium 20, large 30, very large 50
+
+```{r, eval=FALSE}
+# transform CONTRACT_LINE_CATEGORY: NO DISCOUNT = 0, SMALL = 10, MEDIUM = 20, LARGE = 30, 
+# VERY LARGE = 50
+
+fp.t$DISCOUNT_CATEGORY[which(fp.data$DISCOUNT_CATEGORY == 'NO DISCOUNT')] <- 0
+fp.t$DISCOUNT_CATEGORY[which(fp.data$DISCOUNT_CATEGORY == 'MEDIUM')] <- 20
+fp.t$DISCOUNT_CATEGORY[which(fp.data$DISCOUNT_CATEGORY == 'LARGE')] <- 30
+fp.t$DISCOUNT_CATEGORY[which(fp.data$DISCOUNT_CATEGORY == 'VERY LARGE')] <- 50
+
+# now convert column to numeric since it is char
+fp.t$DISCOUNT_CATEGORY <- as.numeric(fp.t$DISCOUNT_CATEGORY)
+
+# check results
+summary(fp.t$DISCOUNT_CATEGORY)
+
+```
+
+
+11,  MULTIPLE_SERVICES = Yes = 1 and No = 0
+
+```{r, eval=FALSE}
+# transform MULTIPLE_SERVICES: YES = 1; NO = 0
+
+fp.t$MULTIPLE_SERVICES[which(fp.data$MULTIPLE_SERVICES == 'YES')] <- 1
+fp.t$MULTIPLE_SERVICES[which(fp.data$MULTIPLE_SERVICES == 'NO')] <- 0
+
+# now convert column to numeric since it is char
+fp.t$MULTIPLE_SERVICES <- as.numeric(fp.t$MULTIPLE_SERVICES)
+
+# check results
+summary(fp.t$MULTIPLE_SERVICES)
+
+```
+
+
+12.  SALES_STRATEGY - GCS = 1, not GCS = 0
+```{r, eval=FALSE}
+# transform SALES_STRATEGY: GCS = 1; NOT GCS = 0
+
+fp.t$SALES_STRATEGY[which(fp.data$SALES_STRATEGY == 'GCS')] <- 1
+fp.t$SALES_STRATEGY[which(fp.data$SALES_STRATEGY == 'NOT GCS')] <- 0
+
+# now convert column to numeric since it is char
+fp.t$SALES_STRATEGY <- as.numeric(fp.t$SALES_STRATEGY)
+
+# check results
+summary(fp.t$SALES_STRATEGY)
+
+```
+
+
+Now write transformed data set to a file
+```{r, eval=FALSE}
+write.csv(fp.t, file = "C:/SQLData/621-FP-Transformed-Data.csv", row.names = FALSE)
+```
+
+
+## Missing Data to be Imputed
 
 The transformed data set can be seen here:
 
